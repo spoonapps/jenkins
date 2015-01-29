@@ -1,0 +1,8 @@
+<?jelly escape-by-default='true'?>
+<j:jelly
+        xmlns:j="jelly:core"
+        xmlns:f="/lib/form">
+    <f:entry title="Output directory" field="outputDirectory">
+        <f:textbox checkUrl="'descriptorByName/ExportPublisher/checkOutputDirectory?value='+escape(this.value)"/>
+    </f:entry>
+</j:jelly>

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jenkins-ci.plugins</groupId>
+        <artifactId>plugin</artifactId>
+        <!-- Baseline Jenkins version you use to build and test the plugin. Users must have this version or newer to run. -->
+        <version>1.580.1</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>org.jenkins-ci.plugins</groupId>
+    <artifactId>spoon-trigger</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>hpi</packaging>
+
+    <name>Spoon Trigger</name>
+    <description>Executes Spoon scripts and exports images or pushes them to hub</description>
+    <!--<url>https://wiki.jenkins-ci.org/display/JENKINS/spoon-trigger</url>-->
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>pmateusz</id>
+            <name>Mateusz Polnik</name>
+            <email>mat.polnik@gmail.com</email>
+        </developer>
+    </developers>
+
+    <!-- Assuming you want to host on @jenkinsci:
+    <scm>
+      <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+      <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+      <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
+    </scm>
+     -->
+
+    <repositories>
+        <repository>
+            <id>repo.jenkins-ci.org</id>
+            <url>http://repo.jenkins-ci.org/public/</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jenkins-ci.plugins</groupId>
+            <artifactId>credentials</artifactId>
+            <version>1.21</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jenkins-ci.modules</groupId>
+            <artifactId>instance-identity</artifactId>
+            <version>1.3</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.14.8</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>15.0</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>2.0.3-beta</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.powermock</groupId>
+            <artifactId>powermock-core</artifactId>
+            <version>1.6.1</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+</project>

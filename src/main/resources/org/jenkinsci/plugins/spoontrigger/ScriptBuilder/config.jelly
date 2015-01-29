@@ -1,0 +1,32 @@
+<?jelly escape-by-default='true'?>
+<j:jelly
+        xmlns:j="jelly:core"
+        xmlns:f="/lib/form"
+        xmlns:c="/lib/credentials">
+    <f:entry title="Script file" field="scriptFilePath">
+        <f:textbox checkUrl="'descriptorByName/ScriptBuilder/checkScriptFilePath?value='+escape(this.value)"/>
+    </f:entry>
+    <f:entry title="Credentials" field="credentialsId">
+        <c:select checkUrl="'descriptorByName/ScriptBuilder/checkCredentialsId?value='+escape(this.value)"/>
+    </f:entry>
+    <f:advanced>
+        <f:entry title="Image name" field="imageName">
+            <f:textbox checkUrl="'descriptorByName/ScriptBuilder/checkImageName?value='+escape(this.value)"/>
+        </f:entry>
+        <f:entry title="Container working directory" field="containerWorkingDir">
+            <f:textbox checkUrl="'descriptorByName/ScriptBuilder/checkContainerWorkingDir?value='+escape(this.value)"/>
+        </f:entry>
+        <f:entry title="Overwrite" field="overwrite">
+            <f:checkbox/>
+        </f:entry>
+        <f:entry title="No-Base" field="nobase">
+            <f:checkbox/>
+        </f:entry>
+        <f:entry title="Diagnostic" field="diagnostic">
+            <f:checkbox/>
+        </f:entry>
+        <f:entry title="VM version" field="vmVersion">
+            <f:textbox checkUrl="'descriptorByName/ScriptBuilder/checkVmVersion?value='+escape(this.value)"/>
+        </f:entry>
+    </f:advanced>
+</j:jelly>
