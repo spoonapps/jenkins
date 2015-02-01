@@ -90,8 +90,7 @@ public class ExportPublisher extends SpoonBasePublisher {
             OUTPUT_DIRECTORY_FILE_VALIDATOR = Validators.chain(
                     FileValidators.exists("Specified directory does not exist", Level.ERROR),
                     FileValidators.isDirectory("Specified path does not point to a directory", Level.ERROR),
-                    FileValidators.isPathAbsolute("Specified path should be absolute if the build will be executed on a remote machine", Level.WARNING)
-            );
+                    FileValidators.isPathAbsolute("Specified path should be absolute if the build will be executed on a remote machine", Level.WARNING));
 
             OUTPUT_DIRECTORY_STRING_VALIDATOR = StringValidators.isNotNull("Output directory is required", Level.ERROR);
         }

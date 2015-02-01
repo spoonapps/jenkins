@@ -81,8 +81,7 @@ public class PushPublisher extends SpoonBasePublisher {
         static {
             REMOTE_IMAGE_NAME_VALIDATOR = Validators.chain(
                 StringValidators.isNotNull("Parameter is required in the build", Level.ERROR),
-                StringValidators.isSingleWord("Name of the image must be a single word", Level.ERROR)
-            );
+                StringValidators.isSingleWord("Name of the image must be a single word", Level.ERROR));
         }
 
         @Override

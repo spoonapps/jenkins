@@ -29,6 +29,9 @@ public final class BuildCommand extends StringPatternCommand {
         private Optional<FilePath> script = Optional.absent();
         private Optional<String> vmVersion = Optional.absent();
         private Optional<String> containerWorkingDir = Optional.absent();
+        private Optional<String> sourceContainer = Optional.absent();
+        private Optional<String> sourceFolder = Optional.absent();
+        private Optional<String> targetFolder = Optional.absent();
         private boolean diagnostic;
         private boolean noBase;
         private boolean overwrite;
@@ -56,10 +59,26 @@ public final class BuildCommand extends StringPatternCommand {
         }
 
         public CommandBuilder containerWorkingDir(String containerWorkingDir) {
-            checkArgument(Util.fixEmptyAndTrim(containerWorkingDir) != null,
-                    "containerWorkingDir '%s' must be not null or empty", containerWorkingDir);
+            checkArgument(Util.fixEmptyAndTrim(containerWorkingDir) != null, "containerWorkingDir must be not null or empty");
 
             this.containerWorkingDir = Optional.of(containerWorkingDir.trim());
+            return this;
+        }
+
+        public CommandBuilder mount(String sourceContainer, String sourceFolder, String targetFolder) {
+            checkArgument(Util.fixEmptyAndTrim(sourceContainer) != null, "sourceContainer must be not null or empty");
+
+            this.mount(sourceFolder, targetFolder);
+            this.sourceContainer = Optional.of(sourceContainer.trim());
+            return this;
+        }
+
+        public CommandBuilder mount(String sourceFolder, String targetFolder) {
+            checkArgument(Util.fixEmptyAndTrim(sourceFolder) != null, "sourceFolder must be not null or empty");
+            checkArgument(Util.fixEmptyAndTrim(targetFolder) != null, "targetFolder must be not null or empty");
+
+            this.sourceFolder = Optional.of(sourceFolder.trim());
+            this.targetFolder = Optional.of(targetFolder.trim());
             return this;
         }
 
@@ -95,6 +114,16 @@ public final class BuildCommand extends StringPatternCommand {
             if (this.containerWorkingDir.isPresent()) {
                 buildArgs.add("--working-dir");
                 buildArgs.addQuoted(this.containerWorkingDir.get());
+            }
+
+            if (this.sourceFolder.isPresent()) {
+                buildArgs.add("--mount");
+
+                String mountLocation = String.format("\"%s=%s\"", this.sourceFolder.get(), this.targetFolder.get());
+                if(this.sourceContainer.isPresent()) {
+                    mountLocation = String.format("%s:%s", this.sourceContainer.get(), mountLocation);
+                }
+                buildArgs.add(mountLocation);
             }
 
             if (this.overwrite) {

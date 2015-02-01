@@ -11,6 +11,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import lombok.Data;
 import lombok.Getter;
 import org.jenkinsci.plugins.spoontrigger.client.BuildCommand;
 import org.jenkinsci.plugins.spoontrigger.client.LoginCommand;
@@ -47,29 +48,45 @@ public class ScriptBuilder extends Builder {
     @Getter private final String vmVersion;
     @Nullable
     @Getter private final String containerWorkingDir;
+    @Nullable
+    @Getter private final MountSettings mountSettings;
+
     @Getter private final boolean diagnostic;
     @Getter private final boolean noBase;
     @Getter private final boolean overwrite;
 
     @DataBoundConstructor
-    public ScriptBuilder(String scriptFilePath, String credentialsId,
-                         String imageName, String vmVersion, String containerWorkingDir,
+    public ScriptBuilder(String scriptFilePath, String credentialsId, String imageName,
+                         String vmVersion, String containerWorkingDir, MountSettings mountSettings,
                          boolean noBase, boolean overwrite, boolean diagnostic) {
         this.scriptFilePath = Util.fixEmptyAndTrim(scriptFilePath);
         this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
         this.imageName = Util.fixEmptyAndTrim(imageName);
         this.vmVersion = Util.fixEmptyAndTrim(vmVersion);
         this.containerWorkingDir = Util.fixEmptyAndTrim(containerWorkingDir);
+        this.mountSettings = mountSettings;
         this.noBase = noBase;
         this.overwrite = overwrite;
         this.diagnostic = diagnostic;
+    }
+
+    public String getSourceContainer() {
+        return (this.mountSettings == null) ? null : this.mountSettings.getSourceContainer();
+    }
+
+    public String getTargetFolder() {
+        return (this.mountSettings == null) ? null : this.mountSettings.getTargetFolder();
+    }
+
+    public String getSourceFolder() {
+        return (this.mountSettings == null) ? null : this.mountSettings.getSourceFolder();
     }
 
     private static IllegalStateException onGetEnvironmentFailed(Exception ex) {
         return new IllegalStateException("Failed to resolve env variables", ex);
     }
 
-    public static Optional<String> toString(FilePath filePath) {
+    private static Optional<String> toString(FilePath filePath) {
         try {
             return Optional.of(filePath.getRemote());
         } catch (Exception ex) {
@@ -82,10 +99,6 @@ public class ScriptBuilder extends Builder {
         checkArgument(build instanceof SpoonBuild, "build must be an instance of %s class", SpoonBuild.class.getName());
 
         try {
-            if (!super.prebuild(build, listener)) {
-                return false;
-            }
-
             SpoonBuild spoonBuild = (SpoonBuild) build;
             Optional<StandardUsernamePasswordCredentials> credentials = this.getCredentials();
             if (credentials.isPresent()) {
@@ -98,7 +111,9 @@ public class ScriptBuilder extends Builder {
             FilePath scriptPath = this.resolveScriptFilePath(build, env, listener);
             spoonBuild.setScript(scriptPath);
 
-            return true;
+            this.checkMountSettings();
+
+            return super.prebuild(build, listener);
         } catch (IllegalStateException ex) {
             TaskListeners.logFatalError(listener, ex);
             return false;
@@ -127,6 +142,14 @@ public class ScriptBuilder extends Builder {
         }
     }
 
+    private void checkMountSettings() {
+        if(this.mountSettings == null) {
+            return;
+        }
+
+        this.mountSettings.checkMissing();
+    }
+
     private void checkSpoonPluginIsRunning(SpoonClient client) {
         VersionCommand versionCmd = VersionCommand.builder().build();
         versionCmd.run(client);
@@ -149,6 +172,10 @@ public class ScriptBuilder extends Builder {
 
         if (this.containerWorkingDir != null) {
             cmdBuilder.containerWorkingDir(this.containerWorkingDir);
+        }
+
+        if(this.mountSettings != null) {
+            this.mountSettings.fill(cmdBuilder);
         }
 
         cmdBuilder.diagnostic(this.diagnostic);
@@ -204,6 +231,44 @@ public class ScriptBuilder extends Builder {
         throw new IllegalStateException(msg);
     }
 
+    @Data
+    public static final class MountSettings {
+
+        private final String sourceContainer;
+        private final String sourceFolder;
+        private final String targetFolder;
+
+        @DataBoundConstructor
+        public MountSettings(String sourceContainer, String sourceFolder, String targetFolder) {
+            this.sourceContainer = Util.fixEmptyAndTrim(sourceContainer);
+            this.sourceFolder = Util.fixEmptyAndTrim(sourceFolder);
+            this.targetFolder = Util.fixEmptyAndTrim(targetFolder);
+        }
+
+        public void checkMissing() {
+            if(this.sourceFolder == null) {
+                throw onMountFolderMissing("source");
+            }
+
+            if(this.targetFolder == null) {
+                throw onMountFolderMissing("target");
+            }
+        }
+
+        private static IllegalStateException onMountFolderMissing(String folderName) {
+            String errMsg = String.format("%s folder must not be null or empty if mount is required", folderName);
+            return new IllegalStateException(errMsg);
+        }
+
+        public void fill(BuildCommand.CommandBuilder cmdBuilder) {
+            if(this.sourceContainer != null) {
+                cmdBuilder.mount(this.sourceContainer, this.sourceFolder, this.targetFolder);
+            } else {
+                cmdBuilder.mount(this.sourceFolder, this.targetFolder);
+            }
+        }
+    }
+
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
@@ -212,11 +277,11 @@ public class ScriptBuilder extends Builder {
         private static final Validator<File> SCRIPT_FILE_PATH_FILE_VALIDATOR;
         private static final Validator<String> VERSION_NUMBER_VALIDATOR;
         private static final Validator<String> CREDENTIALS_ID_VALIDATOR;
-        private static final Validator<String> IMAGE_NAME_VALIDATOR;
+        private static final Validator<String> NULL_OR_SINGLE_WORD_VALIDATOR;
 
         static {
             IGNORE_NULL_VALIDATOR = StringValidators.isNotNull("Parameter will be ignored in the build", Level.OK);
-            SCRIPT_FILE_PATH_STRING_VALIDATOR = StringValidators.isNotNull("Spoon script file is required", Level.ERROR);
+            SCRIPT_FILE_PATH_STRING_VALIDATOR = StringValidators.isNotNull("Parameter is required in the build", Level.ERROR);
             SCRIPT_FILE_PATH_FILE_VALIDATOR = Validators.chain(
                     FileValidators.exists("Specified file does not exist", Level.ERROR),
                     FileValidators.isFile("Specified path does not point to a file", Level.ERROR),
@@ -226,10 +291,9 @@ public class ScriptBuilder extends Builder {
                     IGNORE_NULL_VALIDATOR,
                     StringValidators.isVersionNumber("Spoon VM version number should consist of 4 numbers separated by dot", Level.ERROR));
             CREDENTIALS_ID_VALIDATOR = StringValidators.isNotNull("Credentials are required to login to a Spoon account", Level.WARNING);
-            IMAGE_NAME_VALIDATOR = Validators.chain(
-                    StringValidators.isNotNull("Parameter will be ignored in the build", Level.WARNING),
-                    StringValidators.isSingleWord("The name of a Spoon image must be a single word", Level.ERROR)
-            );
+            NULL_OR_SINGLE_WORD_VALIDATOR = Validators.chain(
+                    IGNORE_NULL_VALIDATOR,
+                    StringValidators.isSingleWord("Parameter must be a single word", Level.ERROR));
         }
 
         private static boolean hasPermission(Item project) {
@@ -274,7 +338,17 @@ public class ScriptBuilder extends Builder {
 
         public FormValidation doCheckImageName(@QueryParameter String value) throws IOException, ServletException {
             String imageName = Util.fixEmptyAndTrim(value);
-            return Validators.validate(IMAGE_NAME_VALIDATOR, imageName);
+            return Validators.validate(NULL_OR_SINGLE_WORD_VALIDATOR, imageName);
+        }
+
+        public FormValidation doCheckSourceContainer(@QueryParameter String value) throws IOException, ServletException {
+            String sourceContainer = Util.fixEmptyAndTrim(value);
+            return Validators.validate(NULL_OR_SINGLE_WORD_VALIDATOR, sourceContainer);
+        }
+
+        public FormValidation doCheckMountFolder(@QueryParameter String value) throws IOException, ServletException {
+            String sourceFolder = Util.fixEmptyAndTrim(value);
+            return Validators.validate(SCRIPT_FILE_PATH_STRING_VALIDATOR, sourceFolder);
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item project) {
