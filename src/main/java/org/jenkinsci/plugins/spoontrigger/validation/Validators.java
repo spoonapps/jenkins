@@ -3,6 +3,7 @@ package org.jenkinsci.plugins.spoontrigger.validation;
 import hudson.util.FormValidation;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.jenkinsci.plugins.spoontrigger.Messages.REQUIRE_NOT_NULL_OR_EMPTY_S;
 
 public final class Validators {
 
@@ -26,7 +27,7 @@ public final class Validators {
 
         @SafeVarargs
         public ValidatorChain(Validator<T>... validators) {
-            checkArgument(validators != null && validators.length > 0, "validators must not be null or empty");
+            checkArgument(validators != null && validators.length > 0, REQUIRE_NOT_NULL_OR_EMPTY_S, "validators");
 
             this.validators = validators;
         }

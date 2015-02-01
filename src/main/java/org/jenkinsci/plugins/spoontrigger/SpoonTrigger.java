@@ -9,7 +9,6 @@ import hudson.triggers.TriggerDescriptor;
 import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
 import jenkins.model.Jenkins;
-import lombok.Data;
 import lombok.Getter;
 import org.jenkinsci.plugins.spoontrigger.git.PushCause;
 import org.jenkinsci.plugins.spoontrigger.utils.Identity;
@@ -28,7 +27,8 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
 
     private static final Logger LOGGER = Logger.getLogger(SpoonTrigger.class.getName());
 
-    @Getter private final String repositoryUrl;
+    @Getter
+    private final String repositoryUrl;
 
     @DataBoundConstructor
     public SpoonTrigger(String repositoryUrl) {
@@ -43,7 +43,7 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
 
     @Override
     public DescriptorImpl getDescriptor() {
-        return (DescriptorImpl)super.getDescriptor();
+        return (DescriptorImpl) super.getDescriptor();
     }
 
     @Override
@@ -75,15 +75,15 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
 
         private static final String DEFAULT_URL;
         private static final Validator<String> REPOSITORY_STRING_VALIDATOR;
-        private static Validator<String> WEB_HOOK_VALIDATOR;
+        private static final Validator<String> WEB_HOOK_VALIDATOR;
 
         static {
             DEFAULT_URL = Jenkins.getInstance().getRootUrl() + SpoonWebHook.getInstance().getUrlName();
 
-            Validator<String> notNullValidator = StringValidators.isNotNull("URL cannot be empty", Level.ERROR);
+            Validator<String> notNullValidator = StringValidators.isNotNull(String.format(Messages.REQUIRE_NON_EMPTY_STRING_S, "URL"), Level.ERROR);
             WEB_HOOK_VALIDATOR = Validators.chain(notNullValidator, new ConnectionValidator());
             REPOSITORY_STRING_VALIDATOR = Validators.chain(notNullValidator,
-                new PredicateValidator<String>(Patterns.Predicates.REPOSITORY_NAME, "Parameter is not correct URL to GitHub repository", Level.ERROR));
+                    new PredicateValidator<String>(Patterns.Predicates.REPOSITORY_NAME, "Parameter is not a correct URL to GitHub repository", Level.ERROR));
         }
 
         private transient final SequentialExecutionQueue queue;
@@ -111,7 +111,7 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
         }
 
         public URL getHookUrl() throws MalformedURLException {
-            if(this.defaultHookUrl == null) {
+            if (this.defaultHookUrl == null) {
                 this.defaultHookUrl = new URL(Jenkins.getInstance().getRootUrl() + SpoonWebHook.getInstance().getUrlName());
             }
             return this.defaultHookUrl;
@@ -136,8 +136,9 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
 
             private FormValidation testConnection(String url) {
                 try {
-                    if(!DEFAULT_URL.equalsIgnoreCase(url)) {
-                        return FormValidation.error("Parameter is not intended to be changed. Initial value of WebHook URL '" + DEFAULT_URL + "' will remain active.");
+                    if (!DEFAULT_URL.equalsIgnoreCase(url)) {
+                        String errMsg = String.format("Parameter is not intended to be changed. Initial value of WebHook URL (%s) will remain active.", DEFAULT_URL);
+                        return FormValidation.error(errMsg);
                     }
 
                     HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
@@ -146,21 +147,24 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
                     connection.connect();
 
                     if (connection.getResponseCode() != SpoonWebHook.HTTP_OK) {
-                        return FormValidation.warning("Got " + connection.getResponseCode() + " from " + url);
+                        String msg = String.format("Got %s from %s", connection.getResponseCode(), url);
+                        return FormValidation.warning(msg);
                     }
 
                     String identityValue = connection.getHeaderField(SpoonWebHook.X_INSTANCE_IDENTITY);
                     if (identityValue == null) {
-                        return FormValidation.warning("It doesn't look like " + url + " to any Jenkins.");
+                        String msg = String.format("It doesn't look like %s to any Jenkins", url);
+                        return FormValidation.warning(msg);
                     }
 
-                    if(Identity.isDefault(identityValue)) {
+                    if (Identity.isDefault(identityValue)) {
                         return FormValidation.warning("Default identity in response header. It is expected if you not have defined SSH identity for Jenkins.");
                     }
 
                     return FormValidation.ok();
                 } catch (IOException ex) {
-                    return FormValidation.error(ex, "Failed to test a connection to " + url);
+                    String errMsg = String.format("Failed to test a connection to %s", url);
+                    return FormValidation.error(ex, errMsg);
                 }
             }
         }

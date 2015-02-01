@@ -27,7 +27,6 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nullable;
-import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
@@ -35,29 +34,39 @@ import java.util.Map;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public class ScriptBuilder extends Builder {
 
     @Nullable
-    @Getter private final String scriptFilePath;
+    @Getter
+    private final String scriptFilePath;
     @Nullable
-    @Getter private final String credentialsId;
+    @Getter
+    private final String credentialsId;
     @Nullable
-    @Getter private final String imageName;
+    @Getter
+    private final String imageName;
     @Nullable
-    @Getter private final String vmVersion;
+    @Getter
+    private final String vmVersion;
     @Nullable
-    @Getter private final String containerWorkingDir;
+    @Getter
+    private final String containerWorkingDir;
     @Nullable
-    @Getter private final MountSettings mountSettings;
+    @Getter
+    private final MountSettings mountSettings;
 
-    @Getter private final boolean diagnostic;
-    @Getter private final boolean noBase;
-    @Getter private final boolean overwrite;
+    @Getter
+    private final boolean diagnostic;
+    @Getter
+    private final boolean noBase;
+    @Getter
+    private final boolean overwrite;
 
     @DataBoundConstructor
     public ScriptBuilder(String scriptFilePath, String credentialsId, String imageName,
-                         String vmVersion, String containerWorkingDir, MountSettings mountSettings,
+                         String vmVersion, String containerWorkingDir, @Nullable MountSettings mountSettings,
                          boolean noBase, boolean overwrite, boolean diagnostic) {
         this.scriptFilePath = Util.fixEmptyAndTrim(scriptFilePath);
         this.credentialsId = Util.fixEmptyAndTrim(credentialsId);
@@ -68,6 +77,19 @@ public class ScriptBuilder extends Builder {
         this.noBase = noBase;
         this.overwrite = overwrite;
         this.diagnostic = diagnostic;
+    }
+
+    private static IllegalStateException onGetEnvironmentFailed(Exception ex) {
+        String errMsg = String.format(FAILED_RESOLVE_S, "environment variables");
+        return new IllegalStateException(errMsg, ex);
+    }
+
+    private static Optional<String> toString(FilePath filePath) {
+        try {
+            return Optional.of(filePath.getRemote());
+        } catch (Exception ex) {
+            return Optional.absent();
+        }
     }
 
     public String getSourceContainer() {
@@ -82,21 +104,9 @@ public class ScriptBuilder extends Builder {
         return (this.mountSettings == null) ? null : this.mountSettings.getSourceFolder();
     }
 
-    private static IllegalStateException onGetEnvironmentFailed(Exception ex) {
-        return new IllegalStateException("Failed to resolve env variables", ex);
-    }
-
-    private static Optional<String> toString(FilePath filePath) {
-        try {
-            return Optional.of(filePath.getRemote());
-        } catch (Exception ex) {
-            return Optional.absent();
-        }
-    }
-
     @Override
     public boolean prebuild(AbstractBuild<?, ?> build, BuildListener listener) {
-        checkArgument(build instanceof SpoonBuild, "build must be an instance of %s class", SpoonBuild.class.getName());
+        checkArgument(build instanceof SpoonBuild, requireInstanceOf("build", SpoonBuild.class));
 
         try {
             SpoonBuild spoonBuild = (SpoonBuild) build;
@@ -143,7 +153,7 @@ public class ScriptBuilder extends Builder {
     }
 
     private void checkMountSettings() {
-        if(this.mountSettings == null) {
+        if (this.mountSettings == null) {
             return;
         }
 
@@ -174,7 +184,7 @@ public class ScriptBuilder extends Builder {
             cmdBuilder.containerWorkingDir(this.containerWorkingDir);
         }
 
-        if(this.mountSettings != null) {
+        if (this.mountSettings != null) {
             this.mountSettings.fill(cmdBuilder);
         }
 
@@ -193,12 +203,12 @@ public class ScriptBuilder extends Builder {
 
         Optional<StandardUsernamePasswordCredentials> credentials = Credentials.lookupById(StandardUsernamePasswordCredentials.class, this.credentialsId);
 
-        checkState(credentials.isPresent(), "Cannot find any credentials with id '%s'", this.credentialsId);
+        checkState(credentials.isPresent(), "Cannot find any credentials with id (%s)", this.credentialsId);
 
         return credentials;
     }
 
-    private EnvVars getEnvironment(AbstractBuild<?,?> build, BuildListener listener) throws IllegalStateException {
+    private EnvVars getEnvironment(AbstractBuild<?, ?> build, BuildListener listener) throws IllegalStateException {
         try {
             EnvVars env = build.getEnvironment(listener);
             Map<String, String> buildVariables = build.getBuildVariables();
@@ -212,7 +222,7 @@ public class ScriptBuilder extends Builder {
     }
 
     private FilePath resolveScriptFilePath(AbstractBuild build, EnvVars environment, BuildListener listener) throws IllegalStateException {
-        checkState(!Strings.isNullOrEmpty(this.scriptFilePath), "script file path '%s' must not be empty or empty", this.scriptFilePath);
+        checkState(Util.fixEmptyAndTrim(this.scriptFilePath) != null, REQUIRE_NON_EMPTY_STRING_S, "script file path");
 
         Optional<FilePath> scriptFile = FileResolver.create()
                 .env(environment).build(build).listener(listener)
@@ -223,10 +233,10 @@ public class ScriptBuilder extends Builder {
             return scriptFile.get();
         }
 
-        String msg = String.format("Failed to find the script file in build workspace '%s' and root module '%s'."
-                        + " If the script file path '%s' is correct check build logs why it was not found.",
-                toString(build.getWorkspace()).or("<failed to resolve>"),
-                toString(build.getModuleRoot()).or("<failed to resolve>"),
+        String msg = String.format("Failed to find the script file in build workspace (%s) and root module (%s)."
+                        + " If the script file path (%s) is correct check build logs why it was not found.",
+                toString(build.getWorkspace()).or(FAILED_RESOLVE_PLACEHOLDER),
+                toString(build.getModuleRoot()).or(FAILED_RESOLVE_PLACEHOLDER),
                 this.scriptFilePath);
         throw new IllegalStateException(msg);
     }
@@ -245,23 +255,23 @@ public class ScriptBuilder extends Builder {
             this.targetFolder = Util.fixEmptyAndTrim(targetFolder);
         }
 
-        public void checkMissing() {
-            if(this.sourceFolder == null) {
-                throw onMountFolderMissing("source");
-            }
-
-            if(this.targetFolder == null) {
-                throw onMountFolderMissing("target");
-            }
-        }
-
         private static IllegalStateException onMountFolderMissing(String folderName) {
-            String errMsg = String.format("%s folder must not be null or empty if mount is required", folderName);
+            String errMsg = String.format(REQUIRE_NON_EMPTY_STRING_S, folderName);
             return new IllegalStateException(errMsg);
         }
 
+        public void checkMissing() {
+            if (this.sourceFolder == null) {
+                throw onMountFolderMissing("Source folder");
+            }
+
+            if (this.targetFolder == null) {
+                throw onMountFolderMissing("Target folder");
+            }
+        }
+
         public void fill(BuildCommand.CommandBuilder cmdBuilder) {
-            if(this.sourceContainer != null) {
+            if (this.sourceContainer != null) {
                 cmdBuilder.mount(this.sourceContainer, this.sourceFolder, this.targetFolder);
             } else {
                 cmdBuilder.mount(this.sourceFolder, this.targetFolder);
@@ -280,27 +290,27 @@ public class ScriptBuilder extends Builder {
         private static final Validator<String> NULL_OR_SINGLE_WORD_VALIDATOR;
 
         static {
-            IGNORE_NULL_VALIDATOR = StringValidators.isNotNull("Parameter will be ignored in the build", Level.OK);
-            SCRIPT_FILE_PATH_STRING_VALIDATOR = StringValidators.isNotNull("Parameter is required in the build", Level.ERROR);
+            IGNORE_NULL_VALIDATOR = StringValidators.isNotNull(IGNORE_PARAMETER, Level.OK);
+            SCRIPT_FILE_PATH_STRING_VALIDATOR = StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR);
             SCRIPT_FILE_PATH_FILE_VALIDATOR = Validators.chain(
-                    FileValidators.exists("Specified file does not exist", Level.ERROR),
-                    FileValidators.isFile("Specified path does not point to a file", Level.ERROR),
-                    FileValidators.isPathAbsolute("Specified path should be absolute if a build will be executed on a remote machine", Level.WARNING)
+                    FileValidators.exists(String.format(DOES_NOT_EXIST_S, "File")),
+                    FileValidators.isFile(String.format(PATH_NOT_POINT_TO_ITEM_S, "a file")),
+                    FileValidators.isPathAbsolute()
             );
             VERSION_NUMBER_VALIDATOR = Validators.chain(
                     IGNORE_NULL_VALIDATOR,
-                    StringValidators.isVersionNumber("Spoon VM version number should consist of 4 numbers separated by dot", Level.ERROR));
+                    StringValidators.isVersionNumber());
             CREDENTIALS_ID_VALIDATOR = StringValidators.isNotNull("Credentials are required to login to a Spoon account", Level.WARNING);
             NULL_OR_SINGLE_WORD_VALIDATOR = Validators.chain(
                     IGNORE_NULL_VALIDATOR,
-                    StringValidators.isSingleWord("Parameter must be a single word", Level.ERROR));
+                    StringValidators.isSingleWord(String.format(REQUIRE_SINGLE_WORD_S, "Parameter")));
         }
 
-        private static boolean hasPermission(Item project) {
-            return project != null && project.hasPermission(Item.CONFIGURE);
+        private static boolean doNotHasPermissions(Item project) {
+            return project == null || !project.hasPermission(Item.CONFIGURE);
         }
 
-        public FormValidation doCheckScriptFilePath(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckScriptFilePath(@QueryParameter String value) {
             String filePath = Util.fixEmptyAndTrim(value);
             try {
                 SCRIPT_FILE_PATH_STRING_VALIDATOR.validate(filePath);
@@ -316,18 +326,18 @@ public class ScriptBuilder extends Builder {
             return AutoCompletion.suggestFiles(value);
         }
 
-        public FormValidation doCheckVmVersion(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckVmVersion(@QueryParameter String value) {
             String versionNumber = Util.fixEmptyAndTrim(value);
             return Validators.validate(VERSION_NUMBER_VALIDATOR, versionNumber);
         }
 
-        public FormValidation doCheckContainerWorkingDir(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckContainerWorkingDir(@QueryParameter String value) {
             String workingDirectory = Util.fixEmptyAndTrim(value);
             return Validators.validate(IGNORE_NULL_VALIDATOR, workingDirectory);
         }
 
-        public FormValidation doCheckCredentialsId(@AncestorInPath Item project, @QueryParameter String value) throws IOException, ServletException {
-            if (!hasPermission(project)) {
+        public FormValidation doCheckCredentialsId(@AncestorInPath Item project, @QueryParameter String value) {
+            if (doNotHasPermissions(project)) {
                 return FormValidation.ok();
             }
 
@@ -336,23 +346,23 @@ public class ScriptBuilder extends Builder {
             return Validators.validate(validator, credentialsId);
         }
 
-        public FormValidation doCheckImageName(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckImageName(@QueryParameter String value) {
             String imageName = Util.fixEmptyAndTrim(value);
             return Validators.validate(NULL_OR_SINGLE_WORD_VALIDATOR, imageName);
         }
 
-        public FormValidation doCheckSourceContainer(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckSourceContainer(@QueryParameter String value) {
             String sourceContainer = Util.fixEmptyAndTrim(value);
             return Validators.validate(NULL_OR_SINGLE_WORD_VALIDATOR, sourceContainer);
         }
 
-        public FormValidation doCheckMountFolder(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckMountFolder(@QueryParameter String value) {
             String sourceFolder = Util.fixEmptyAndTrim(value);
             return Validators.validate(SCRIPT_FILE_PATH_STRING_VALIDATOR, sourceFolder);
         }
 
         public ListBoxModel doFillCredentialsIdItems(@AncestorInPath Item project) {
-            if (!hasPermission(project)) {
+            if (doNotHasPermissions(project)) {
                 return new StandardListBoxModel();
             }
 
@@ -386,7 +396,8 @@ public class ScriptBuilder extends Builder {
                     return;
                 }
 
-                FormValidation formValidation = FormValidation.warning("Cannot find any credentials with id " + credentialsId);
+                String errMsg = String.format("Cannot find any credentials with id (%s)", credentialsId);
+                FormValidation formValidation = FormValidation.warning(errMsg);
                 throw new ValidationException(formValidation);
             }
         }

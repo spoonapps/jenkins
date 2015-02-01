@@ -7,7 +7,7 @@ import javax.annotation.Nullable;
 import java.security.interfaces.RSAPublicKey;
 
 public class Identity {
-    static final String DEFAULT = "NO_IDENTITY_KEY";
+    private static final String DEFAULT = "NO_IDENTITY_KEY";
 
     public static boolean isDefault(@Nullable String identity) {
         return DEFAULT.equals(identity);

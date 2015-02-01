@@ -12,10 +12,14 @@ import java.io.IOException;
 
 public class SpoonBuild extends Build<SpoonProject, SpoonBuild> {
 
-    @Getter private Optional<StandardUsernamePasswordCredentials> credentials = Optional.absent();
-    @Getter private Optional<String> builtImage = Optional.absent();
-    @Getter private Optional<FilePath> script = Optional.absent();
-    @Getter private Optional<EnvVars> env = Optional.absent();
+    @Getter
+    private Optional<StandardUsernamePasswordCredentials> credentials = Optional.absent();
+    @Getter
+    private Optional<String> builtImage = Optional.absent();
+    @Getter
+    private Optional<FilePath> script = Optional.absent();
+    @Getter
+    private Optional<EnvVars> env = Optional.absent();
 
     public SpoonBuild(SpoonProject project) throws IOException {
         super(project);

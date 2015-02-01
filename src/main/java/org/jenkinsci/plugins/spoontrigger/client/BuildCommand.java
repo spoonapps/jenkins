@@ -10,12 +10,13 @@ import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public final class BuildCommand extends StringPatternCommand {
 
     private static final Pattern OUTPUT_IMAGE_PATTERN = Pattern.compile("Output\\s+image:\\s+(\\S+)", Pattern.CASE_INSENSITIVE);
 
-    BuildCommand(ArgumentListBuilder argumentList) {
+    private BuildCommand(ArgumentListBuilder argumentList) {
         super(argumentList, OUTPUT_IMAGE_PATTERN);
     }
 
@@ -37,36 +38,35 @@ public final class BuildCommand extends StringPatternCommand {
         private boolean overwrite;
 
         public CommandBuilder image(String image) {
-            checkArgument(Patterns.isSingleWord(image), "image '%s' must be a single word", image);
+            checkArgument(Patterns.isSingleWord(image), REQUIRE_SINGLE_WORD_SP, "image", image);
 
             this.image = Optional.of(image.trim());
             return this;
         }
 
         public CommandBuilder script(FilePath script) {
-            checkArgument(script != null, "script must be not null");
+            checkArgument(script != null, REQUIRE_NOT_NULL_S, "script");
 
             this.script = Optional.of(script);
             return this;
         }
 
         public CommandBuilder vmVersion(String vmVersion) {
-            checkArgument(Patterns.isVersionNumber(vmVersion), "vmVersion '%s' must"
-                    + " consist of 4 numbers separated by dot", vmVersion);
+            checkArgument(Patterns.isVersionNumber(vmVersion), "vmVersion (%s) must consist of 4 numbers separated by dot", vmVersion);
 
             this.vmVersion = Optional.of(vmVersion.trim());
             return this;
         }
 
         public CommandBuilder containerWorkingDir(String containerWorkingDir) {
-            checkArgument(Util.fixEmptyAndTrim(containerWorkingDir) != null, "containerWorkingDir must be not null or empty");
+            checkArgument(Util.fixEmptyAndTrim(containerWorkingDir) != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "containerWorkingDir");
 
             this.containerWorkingDir = Optional.of(containerWorkingDir.trim());
             return this;
         }
 
         public CommandBuilder mount(String sourceContainer, String sourceFolder, String targetFolder) {
-            checkArgument(Util.fixEmptyAndTrim(sourceContainer) != null, "sourceContainer must be not null or empty");
+            checkArgument(Util.fixEmptyAndTrim(sourceContainer) != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "sourceContainer");
 
             this.mount(sourceFolder, targetFolder);
             this.sourceContainer = Optional.of(sourceContainer.trim());
@@ -74,8 +74,8 @@ public final class BuildCommand extends StringPatternCommand {
         }
 
         public CommandBuilder mount(String sourceFolder, String targetFolder) {
-            checkArgument(Util.fixEmptyAndTrim(sourceFolder) != null, "sourceFolder must be not null or empty");
-            checkArgument(Util.fixEmptyAndTrim(targetFolder) != null, "targetFolder must be not null or empty");
+            checkArgument(Util.fixEmptyAndTrim(sourceFolder) != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "sourceFolder");
+            checkArgument(Util.fixEmptyAndTrim(targetFolder) != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "targetFolder");
 
             this.sourceFolder = Optional.of(sourceFolder.trim());
             this.targetFolder = Optional.of(targetFolder.trim());
@@ -98,9 +98,9 @@ public final class BuildCommand extends StringPatternCommand {
         }
 
         public BuildCommand build() {
-            checkState(this.script.isPresent(), "script must be set");
+            checkState(this.script.isPresent(), REQUIRE_PRESENT_S, "script");
 
-            ArgumentListBuilder buildArgs = new ArgumentListBuilder(CONSOLE_APP, "build");
+            ArgumentListBuilder buildArgs = new ArgumentListBuilder(SPOON_CLIENT, "build");
             if (this.image.isPresent()) {
                 buildArgs.add("--name");
                 buildArgs.add(this.image.get());
@@ -120,7 +120,7 @@ public final class BuildCommand extends StringPatternCommand {
                 buildArgs.add("--mount");
 
                 String mountLocation = String.format("\"%s=%s\"", this.sourceFolder.get(), this.targetFolder.get());
-                if(this.sourceContainer.isPresent()) {
+                if (this.sourceContainer.isPresent()) {
                     mountLocation = String.format("%s:%s", this.sourceContainer.get(), mountLocation);
                 }
                 buildArgs.add(mountLocation);

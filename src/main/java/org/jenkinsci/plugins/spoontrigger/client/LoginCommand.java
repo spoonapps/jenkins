@@ -7,10 +7,11 @@ import hudson.util.Secret;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public final class LoginCommand extends VoidCommand {
 
-    LoginCommand(ArgumentListBuilder argumentList) {
+    private LoginCommand(ArgumentListBuilder argumentList) {
         super(argumentList);
     }
 
@@ -24,24 +25,24 @@ public final class LoginCommand extends VoidCommand {
         private Optional<Secret> password = Optional.absent();
 
         public CommandBuilder login(String login) {
-            checkArgument(Util.fixEmptyAndTrim(login) != null, "login '%s' must be a nonempty string", login);
+            checkArgument(Util.fixEmptyAndTrim(login) != null, REQUIRE_NON_EMPTY_STRING_S, "login");
 
             this.login = Optional.of(login.trim());
             return this;
         }
 
         public CommandBuilder password(Secret password) {
-            checkArgument(password != null, "password must not be null");
+            checkArgument(password != null, REQUIRE_NOT_NULL_S, "password");
 
             this.password = Optional.of(password);
             return this;
         }
 
         public LoginCommand build() {
-            checkState(this.login.isPresent(), "login must be set");
-            checkState(this.password.isPresent(), "password must be set");
+            checkState(this.login.isPresent(), REQUIRE_PRESENT_S, "login");
+            checkState(this.password.isPresent(), REQUIRE_PRESENT_S, "password");
 
-            ArgumentListBuilder loginArgs = new ArgumentListBuilder(CONSOLE_APP, "login");
+            ArgumentListBuilder loginArgs = new ArgumentListBuilder(SPOON_CLIENT, "login");
             loginArgs.add(this.login.get());
             loginArgs.addMasked(this.password.get());
             return new LoginCommand(loginArgs);

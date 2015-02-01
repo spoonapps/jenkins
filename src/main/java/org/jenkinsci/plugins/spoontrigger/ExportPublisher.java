@@ -17,11 +17,11 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.annotation.Nullable;
-import javax.servlet.ServletException;
 import java.io.File;
 import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public class ExportPublisher extends SpoonBasePublisher {
 
@@ -36,7 +36,7 @@ public class ExportPublisher extends SpoonBasePublisher {
     }
 
     private static IllegalStateException onFailedResolveOutputDirectory(String directoryPath, Exception ex) {
-        String msg = String.format("Failed to resolve output directory '%s'", directoryPath);
+        String msg = String.format(FAILED_RESOLVE_SP, "output directory", directoryPath);
         return new IllegalStateException(msg, ex);
     }
 
@@ -55,18 +55,18 @@ public class ExportPublisher extends SpoonBasePublisher {
     }
 
     private FilePath resolveOutputDirectory(SpoonBuild build, TaskListener listener) throws IllegalStateException {
-        checkState(this.outputDirectory != null, "output directory must not be null or empty");
+        checkState(this.outputDirectory != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "output directory");
 
         Optional<EnvVars> env = build.getEnv();
 
-        checkState(env.isPresent(), "build environment variables must be provided");
+        checkState(env.isPresent(), REQUIRE_PRESENT_S, "build environment variables");
 
         Optional<FilePath> directoryPath = FileResolver.create().env(env.get()).build(build).listener(listener).resolve(this.outputDirectory);
 
-        checkState(directoryPath.isPresent(), "output directory '%s' does not exist", this.outputDirectory);
+        checkState(directoryPath.isPresent(), DOES_NOT_EXIST_SP, "output directory", this.outputDirectory);
 
         try {
-            checkState(directoryPath.get().isDirectory(), "output directory '%s' is not a path to a directory", this.outputDirectory);
+            checkState(directoryPath.get().isDirectory(), PATH_NOT_POINT_TO_ITEM_SPS, "output directory", this.outputDirectory, "a directory");
         } catch (IOException ex) {
             throw onFailedResolveOutputDirectory(this.outputDirectory, ex);
         } catch (InterruptedException ex) {
@@ -88,11 +88,11 @@ public class ExportPublisher extends SpoonBasePublisher {
 
         static {
             OUTPUT_DIRECTORY_FILE_VALIDATOR = Validators.chain(
-                    FileValidators.exists("Specified directory does not exist", Level.ERROR),
-                    FileValidators.isDirectory("Specified path does not point to a directory", Level.ERROR),
-                    FileValidators.isPathAbsolute("Specified path should be absolute if the build will be executed on a remote machine", Level.WARNING));
+                    FileValidators.exists(String.format(DOES_NOT_EXIST_S, "Directory")),
+                    FileValidators.isDirectory(String.format(PATH_NOT_POINT_TO_ITEM_S, "a directory")),
+                    FileValidators.isPathAbsolute());
 
-            OUTPUT_DIRECTORY_STRING_VALIDATOR = StringValidators.isNotNull("Output directory is required", Level.ERROR);
+            OUTPUT_DIRECTORY_STRING_VALIDATOR = StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR);
         }
 
         @Override
@@ -100,7 +100,7 @@ public class ExportPublisher extends SpoonBasePublisher {
             return TypeToken.of(SpoonProject.class).isAssignableFrom(aClass);
         }
 
-        public FormValidation doCheckOutputDirectory(@QueryParameter String value) throws IOException, ServletException {
+        public FormValidation doCheckOutputDirectory(@QueryParameter String value) {
             String filePath = Util.fixEmptyAndTrim(value);
             try {
                 OUTPUT_DIRECTORY_STRING_VALIDATOR.validate(filePath);

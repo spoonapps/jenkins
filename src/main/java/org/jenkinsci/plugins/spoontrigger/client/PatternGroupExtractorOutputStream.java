@@ -15,7 +15,7 @@ import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-class PatternGroupExtractorOutputStream extends LineTransformationOutputStream {
+final class PatternGroupExtractorOutputStream extends LineTransformationOutputStream {
 
     private final PatternGroupExtractor groupExtractor;
     private final PrintStream out;
@@ -48,11 +48,11 @@ class PatternGroupExtractorOutputStream extends LineTransformationOutputStream {
 
         private static final Pattern CONTAINS_GROUP_PATTERN = Pattern.compile("[^\\\\]*\\(.*[^\\\\]\\)");
 
-        private Pattern pattern;
+        private final Pattern pattern;
 
         public PatternGroupExtractor(Pattern pattern) {
             checkArgument(pattern != null && Patterns.matches(pattern.toString(), CONTAINS_GROUP_PATTERN),
-                    "pattern '%s' must be a not null regex with a matching group", pattern);
+                    "pattern (%s) must be a not null regex with a matching group", pattern);
 
             this.pattern = pattern;
         }

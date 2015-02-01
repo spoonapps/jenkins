@@ -15,6 +15,8 @@ import org.jenkinsci.plugins.spoontrigger.utils.TaskListeners;
 import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.REQUIRE_PRESENT_S;
+import static org.jenkinsci.plugins.spoontrigger.Messages.requireInstanceOf;
 
 abstract class SpoonBasePublisher extends Publisher {
 
@@ -29,23 +31,22 @@ abstract class SpoonBasePublisher extends Publisher {
     @Override
     public boolean prebuild(AbstractBuild<?, ?> abstractBuild, BuildListener listener) {
         if (!(abstractBuild instanceof SpoonBuild)) {
-            listener.fatalError("build must be an instance of %s class", SpoonBuild.class.getSimpleName());
+            listener.fatalError(requireInstanceOf("build", SpoonBuild.class));
             return false;
         }
 
         return super.prebuild(abstractBuild, listener);
     }
 
-    protected void beforePublish(SpoonBuild build, BuildListener listener) throws IllegalStateException {
+    void beforePublish(SpoonBuild build, BuildListener listener) throws IllegalStateException {
         Optional<Result> buildResult = Optional.fromNullable(build.getResult());
-        checkState(buildResult.isPresent(), "%s requires a healthy build to continue."
-                + " The result of current build is not available", this.getClass().getName());
-        checkState(buildResult.get().isBetterThan(Result.FAILURE), "%s requires a healthy build to continue."
-                + " Result of the current build is %s.", this.getClass().getName(), buildResult.get().toString());
+        checkState(buildResult.isPresent(), "%s requires a healthy build to continue. The result of current build is not available", Messages.toString(this.getClass()));
+        checkState(buildResult.get().isBetterThan(Result.FAILURE), "%s requires a healthy build to continue. Result of the current build is %s.",
+                Messages.toString(this.getClass()), buildResult.get());
 
         Optional<String> builtImage = build.getBuiltImage();
 
-        checkState(builtImage.isPresent(), "built image name must be provided");
+        checkState(builtImage.isPresent(), REQUIRE_PRESENT_S, "built image");
 
         this.imageName = builtImage;
     }
@@ -58,6 +59,8 @@ abstract class SpoonBasePublisher extends Publisher {
             SpoonBuild build = (SpoonBuild) abstractBuild;
             this.beforePublish(build, listener);
             this.publish(build, launcher, listener);
+
+
             return true;
         } catch (IllegalStateException ex) {
             TaskListeners.logFatalError(listener, ex);
@@ -65,7 +68,7 @@ abstract class SpoonBasePublisher extends Publisher {
         }
     }
 
-    protected SpoonClient createClient(AbstractBuild<?, ?> abstractBuild, Launcher launcher, BuildListener listener) {
+    SpoonClient createClient(AbstractBuild<?, ?> abstractBuild, Launcher launcher, BuildListener listener) {
         SpoonBuild build = (SpoonBuild) abstractBuild;
         return SpoonClient.builder(build).launcher(launcher).listener(listener).build();
     }

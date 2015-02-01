@@ -29,17 +29,18 @@ import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 
 import javax.annotation.Nullable;
-import javax.servlet.ServletException;
-import java.io.IOException;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public class PushPublisher extends SpoonBasePublisher {
 
-    @Getter private final RemoteImageStrategy remoteImageStrategy;
+    @Getter
+    private final RemoteImageStrategy remoteImageStrategy;
 
     @Nullable
-    @Getter private final String remoteImageName;
+    @Getter
+    private final String remoteImageName;
 
     @DataBoundConstructor
     public PushPublisher(@Nullable RemoteImageStrategy remoteImageStrategy, @Nullable String remoteImageName) {
@@ -73,52 +74,6 @@ public class PushPublisher extends SpoonBasePublisher {
         return cmdBuilder.build();
     }
 
-    @Extension
-    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-
-        private static final Validator<String> REMOTE_IMAGE_NAME_VALIDATOR;
-
-        static {
-            REMOTE_IMAGE_NAME_VALIDATOR = Validators.chain(
-                StringValidators.isNotNull("Parameter is required in the build", Level.ERROR),
-                StringValidators.isSingleWord("Name of the image must be a single word", Level.ERROR));
-        }
-
-        @Override
-        public Publisher newInstance(StaplerRequest req, JSONObject formData) throws FormException {
-            try {
-                JSONObject pushJSON = formData.getJSONObject("remoteImageStrategy");
-
-                if (pushJSON == null || pushJSON.isNullObject()) {
-                    new PushPublisher(RemoteImageStrategy.DO_NOT_USE, null);
-                }
-
-                String remoteImageStrategyName = pushJSON.getString("value");
-                RemoteImageStrategy remoteImageStrategy = RemoteImageStrategy.valueOf(remoteImageStrategyName);
-                String remoteImageName = (String) pushJSON.getOrDefault("remoteImageName", null);
-                return new PushPublisher(remoteImageStrategy, remoteImageName);
-            }catch (JSONException ex) {
-                throw new IllegalStateException("Error while parsing form data", ex);
-            }
-        }
-
-
-        @Override
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            return TypeToken.of(SpoonProject.class).isAssignableFrom(aClass);
-        }
-
-        public FormValidation doCheckRemoteImageName(@QueryParameter String value) throws IOException, ServletException {
-            String imageName = Util.fixEmptyAndTrim(value);
-            return Validators.validate(REMOTE_IMAGE_NAME_VALIDATOR, imageName);
-        }
-
-        @Override
-        public String getDisplayName() {
-            return "Push Spoon image";
-        }
-    }
-
     private enum RemoteImageStrategy {
         DO_NOT_USE {
             @Override
@@ -130,13 +85,13 @@ public class PushPublisher extends SpoonBasePublisher {
             @Override
             public Optional<String> tryGetRemoteImage(PushPublisher publisher, SpoonBuild build) {
                 PushCause cause = build.getCause(PushCause.class);
-                if(cause != null) {
+                if (cause != null) {
                     return Optional.of(RemoteImageGenerator.fromPush(cause));
 
                 }
 
                 BuildData buildData = build.getAction(BuildData.class);
-                if(buildData != null) {
+                if (buildData != null) {
                     return Optional.of(RemoteImageGenerator.fromPull(buildData));
                 }
 
@@ -148,12 +103,12 @@ public class PushPublisher extends SpoonBasePublisher {
                 super.validate(publisher, build);
 
                 PushCause webHookCause = build.getCause(PushCause.class);
-                if(webHookCause != null) {
+                if (webHookCause != null) {
                     return;
                 }
 
                 BuildData pullGitCause = build.getAction(BuildData.class);
-                if(pullGitCause != null) {
+                if (pullGitCause != null) {
                     return;
                 }
 
@@ -170,12 +125,60 @@ public class PushPublisher extends SpoonBasePublisher {
             public void validate(PushPublisher publisher, SpoonBuild build) {
                 super.validate(publisher, build);
 
-                checkState(Patterns.isNullOrSingleWord(publisher.getRemoteImageName()),
-                        "remote image name '%s' must be a single word or null", publisher.getRemoteImageName());
+                checkState(Patterns.isNullOrSingleWord(publisher.getRemoteImageName()), REQUIRE_SINGLE_WORD_OR_NULL_SP,
+                        "Remote image name", publisher.getRemoteImageName());
             }
         };
 
         public abstract Optional<String> tryGetRemoteImage(PushPublisher publisher, SpoonBuild build);
-        public void validate(PushPublisher publisher, SpoonBuild build) { }
+
+        public void validate(PushPublisher publisher, SpoonBuild build) {
+        }
+    }
+
+    @Extension
+    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+
+        private static final Validator<String> REMOTE_IMAGE_NAME_VALIDATOR;
+
+        static {
+            REMOTE_IMAGE_NAME_VALIDATOR = Validators.chain(
+                    StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR),
+                    StringValidators.isSingleWord(String.format(REQUIRE_SINGLE_WORD_S, "Parameter")));
+        }
+
+        @Override
+        public Publisher newInstance(StaplerRequest req, JSONObject formData) throws FormException {
+            try {
+                JSONObject pushJSON = formData.getJSONObject("remoteImageStrategy");
+
+                if (pushJSON == null || pushJSON.isNullObject()) {
+                    return new PushPublisher(RemoteImageStrategy.DO_NOT_USE, null);
+                }
+
+                String remoteImageStrategyName = pushJSON.getString("value");
+                RemoteImageStrategy remoteImageStrategy = RemoteImageStrategy.valueOf(remoteImageStrategyName);
+                String remoteImageName = (String) pushJSON.getOrDefault("remoteImageName", null);
+                return new PushPublisher(remoteImageStrategy, remoteImageName);
+            } catch (JSONException ex) {
+                throw new IllegalStateException("Error while parsing data form", ex);
+            }
+        }
+
+
+        @Override
+        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
+            return TypeToken.of(SpoonProject.class).isAssignableFrom(aClass);
+        }
+
+        public FormValidation doCheckRemoteImageName(@QueryParameter String value) {
+            String imageName = Util.fixEmptyAndTrim(value);
+            return Validators.validate(REMOTE_IMAGE_NAME_VALIDATOR, imageName);
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "Push Spoon image";
+        }
     }
 }

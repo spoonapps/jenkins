@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 @Data
 public final class Repository {
@@ -25,10 +26,10 @@ public final class Repository {
     private final String project;
 
     public Repository(String url) {
-        checkArgument(Util.fixEmptyAndTrim(url) != null, "url must be not null or empty");
+        checkArgument(Util.fixEmptyAndTrim(url) != null, REQUIRE_NON_EMPTY_STRING_S, "url", url);
 
         Matcher matcher = GIT_REPOSITORY_PATTERN.matcher(url);
-        checkArgument(matcher.find(), "url (%s) does not have valid format", url);
+        checkArgument(matcher.find(), REQUIRE_VALID_FORMAT_SP, "url", url);
 
         this.url = url;
         this.organization = matcher.group(ORGANIZATION_GROUP);

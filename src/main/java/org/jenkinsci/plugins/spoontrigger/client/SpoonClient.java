@@ -15,6 +15,7 @@ import java.io.PrintStream;
 import java.nio.charset.Charset;
 
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.REQUIRE_PRESENT_S;
 
 public final class SpoonClient {
 
@@ -54,7 +55,8 @@ public final class SpoonClient {
         }
 
         if (errorCode != NO_ERROR) {
-            throw new IllegalStateException("Process returned error code " + errorCode);
+            String errMsg = String.format("Process returned error code %d", errorCode);
+            throw new IllegalStateException(errMsg);
         }
     }
 
@@ -63,7 +65,8 @@ public final class SpoonClient {
     }
 
     private IllegalStateException onLaunchFailure(ArgumentListBuilder args, Exception ex) {
-        return new IllegalStateException("Execution of command: '" + args.toString() + "' failed", ex);
+        String errMsg = String.format("Execution of command (%s) failed", args);
+        return new IllegalStateException(errMsg, ex);
     }
 
     private Launcher.ProcStarter createLauncher() {
@@ -104,10 +107,10 @@ public final class SpoonClient {
         }
 
         public SpoonClient build() {
-            checkState(this.client.env != null, "env must be set");
-            checkState(this.client.pwd != null, "pwd must be set");
-            checkState(this.client.launcher != null, "launcher must be set");
-            checkState(this.client.listener != null, "listener must be set");
+            checkState(this.client.env != null, REQUIRE_PRESENT_S, "env");
+            checkState(this.client.pwd != null, REQUIRE_PRESENT_S, "pwd");
+            checkState(this.client.launcher != null, REQUIRE_PRESENT_S, "launcher");
+            checkState(this.client.listener != null, REQUIRE_PRESENT_S, "listener");
 
             if (this.client.charset == null) {
                 this.client.charset = Charset.defaultCharset();

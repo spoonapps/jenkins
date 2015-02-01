@@ -8,9 +8,9 @@ import java.util.Set;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
-public class RemoteImageGenerator {
+public final class RemoteImageGenerator {
 
-    public static String fromPush(PushCause cause){
+    public static String fromPush(PushCause cause) {
         return generateRemoteImageName(cause.getRepository(), cause.getBranch());
     }
 

@@ -8,7 +8,7 @@ public class VersionCommand extends StringPatternCommand {
 
     private static final Pattern VERSION_PATTERN = Pattern.compile("\\s*Version:\\s+(\\S+)", Pattern.CASE_INSENSITIVE);
 
-    VersionCommand(ArgumentListBuilder argumentList) {
+    private VersionCommand(ArgumentListBuilder argumentList) {
         super(argumentList, VERSION_PATTERN);
     }
 
@@ -19,7 +19,7 @@ public class VersionCommand extends StringPatternCommand {
     public static final class CommandBuilder {
 
         public VersionCommand build() {
-            ArgumentListBuilder versionArgs = new ArgumentListBuilder(CONSOLE_APP, "version");
+            ArgumentListBuilder versionArgs = new ArgumentListBuilder(SPOON_CLIENT, "version");
             return new VersionCommand(versionArgs);
         }
     }

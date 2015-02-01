@@ -4,14 +4,15 @@ import hudson.util.ArgumentListBuilder;
 
 abstract class BaseCommand {
 
-    protected static final String CONSOLE_APP = "spoon";
+    static final String SPOON_CLIENT = "spoon";
+
     private final ArgumentListBuilder argumentList;
 
     BaseCommand(ArgumentListBuilder argumentList) {
         this.argumentList = argumentList;
     }
 
-    public ArgumentListBuilder getArgumentList() {
+    ArgumentListBuilder getArgumentList() {
         return argumentList;
     }
 }

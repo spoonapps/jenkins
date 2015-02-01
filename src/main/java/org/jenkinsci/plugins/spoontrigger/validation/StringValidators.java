@@ -5,20 +5,16 @@ import org.jenkinsci.plugins.spoontrigger.utils.Patterns;
 
 public final class StringValidators {
 
-    public static Validator<String> isNull(String failureMsg, Level level) {
-        return new PredicateValidator(Predicates.IS_NULL, failureMsg, level);
-    }
-
     public static Validator<String> isNotNull(String failureMsg, Level level) {
-        return new PredicateValidator(Predicates.IS_NOT_NULL, failureMsg, level);
+        return new PredicateValidator<String>(Predicates.IS_NOT_NULL, failureMsg, level);
     }
 
-    public static Validator<String> isVersionNumber(String failureMsg, Level level) {
-        return new PredicateValidator(Patterns.Predicates.VERSION_NUMBER, failureMsg, level);
+    public static Validator<String> isVersionNumber() {
+        return new PredicateValidator<String>(Patterns.Predicates.VERSION_NUMBER, "Spoon VM version number should consist of 4 numbers separated by dot", Level.ERROR);
     }
 
-    public static Validator<String> isSingleWord(String failureMsg, Level level) {
-        return new PredicateValidator(Patterns.Predicates.SINGLE_WORD, failureMsg, level);
+    public static Validator<String> isSingleWord(String failureMsg) {
+        return new PredicateValidator<String>(Patterns.Predicates.SINGLE_WORD, failureMsg, Level.ERROR);
     }
 
     enum Predicates implements Predicate<String> {

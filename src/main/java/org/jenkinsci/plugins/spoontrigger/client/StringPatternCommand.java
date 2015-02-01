@@ -28,7 +28,8 @@ class StringPatternCommand extends BaseCommand {
                 return group.get();
             }
 
-            throw new IllegalStateException("Result was not found in output from the execution of '" + getArgumentList().toString() + "' command");
+            String errMsg = String.format("Result was not found in output from command (%s) execution ", this.getArgumentList().toString());
+            throw new IllegalStateException(errMsg);
         } finally {
             try {
                 final boolean swallowException = true;

@@ -38,7 +38,7 @@ public class SpoonWebHook implements UnprotectedRootAction {
     static final String X_INSTANCE_IDENTITY = "X-Instance-Identity";
 
     @Inject
-    InstanceIdentity identity;
+    private InstanceIdentity identity;
 
     @Override
     public String getIconFileName() {

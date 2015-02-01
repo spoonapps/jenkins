@@ -6,10 +6,12 @@ import org.jenkinsci.plugins.spoontrigger.utils.Patterns;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.REQUIRE_PRESENT_S;
+import static org.jenkinsci.plugins.spoontrigger.Messages.REQUIRE_SINGLE_WORD_SP;
 
 public final class PushCommand extends VoidCommand {
 
-    PushCommand(ArgumentListBuilder argumentList) {
+    private PushCommand(ArgumentListBuilder argumentList) {
         super(argumentList);
     }
 
@@ -23,23 +25,23 @@ public final class PushCommand extends VoidCommand {
         private Optional<String> remoteImageName = Optional.absent();
 
         public CommandBuilder image(String image) {
-            checkArgument(Patterns.isSingleWord(image), "image '%s' must be a single word", image);
+            checkArgument(Patterns.isSingleWord(image), REQUIRE_SINGLE_WORD_SP, "image", image);
 
             this.imageName = Optional.of(image.trim());
             return this;
         }
 
         public CommandBuilder remoteImage(String image) {
-            checkArgument(Patterns.isSingleWord(image), "image '%s' must be a single word", image);
+            checkArgument(Patterns.isSingleWord(image), REQUIRE_SINGLE_WORD_SP, "image", image);
 
             this.remoteImageName = Optional.of(image.trim());
             return this;
         }
 
         public PushCommand build() {
-            checkState(this.imageName.isPresent(), "image must be set");
+            checkState(this.imageName.isPresent(), REQUIRE_PRESENT_S, "image");
 
-            ArgumentListBuilder args = new ArgumentListBuilder(CONSOLE_APP, "push", this.imageName.get());
+            ArgumentListBuilder args = new ArgumentListBuilder(SPOON_CLIENT, "push", this.imageName.get());
             if (this.remoteImageName.isPresent()) {
                 args.add(this.remoteImageName.get());
             }

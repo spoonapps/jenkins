@@ -16,6 +16,7 @@ import java.util.List;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public final class FileResolver {
 
@@ -29,7 +30,7 @@ public final class FileResolver {
     }
 
     public FileResolver probingStrategy(Probe... probe) {
-        checkArgument(probe != null && probe.length > 0, "resolution strategy must not be null or empty");
+        checkArgument(probe != null && probe.length > 0, REQUIRE_NOT_NULL_OR_EMPTY_S, "resolution strategy");
         checkArgument(ImmutableSet.copyOf(probe).size() == probe.length, "resolution strategy contains duplicates");
 
         this.probingStrategy = Arrays.asList(probe);
@@ -37,30 +38,30 @@ public final class FileResolver {
     }
 
     public FileResolver listener(TaskListener taskListener) {
-        checkArgument(taskListener != null, "listener must not be null");
+        checkArgument(taskListener != null, REQUIRE_NOT_NULL_S, "listener");
 
         this.taskListener = Optional.of(taskListener);
         return this;
     }
 
     public FileResolver env(EnvVars env) {
-        checkArgument(env != null, "env must not be null");
+        checkArgument(env != null, REQUIRE_NOT_NULL_S, "env");
 
         this.env = Optional.of(env);
         return this;
     }
 
     public FileResolver build(AbstractBuild build) {
-        checkArgument(build != null, "build must not be null");
+        checkArgument(build != null, REQUIRE_NOT_NULL_S, "build");
 
         this.build = Optional.of(build);
         return this;
     }
 
     public Optional<FilePath> resolve(String filePath) {
-        checkArgument(!Strings.isNullOrEmpty(filePath), "filePath must not be null or empty");
-        checkState(this.build.isPresent(), "build must be set");
-        checkState(this.taskListener.isPresent(), "listener must be set");
+        checkArgument(!Strings.isNullOrEmpty(filePath), REQUIRE_NOT_NULL_OR_EMPTY_S, "filePath");
+        checkState(this.build.isPresent(), REQUIRE_PRESENT_S, "build");
+        checkState(this.taskListener.isPresent(), REQUIRE_PRESENT_S, "listener");
 
         String expandedPath = this.env.isPresent() ? this.env.get().expand(filePath) : filePath;
         for (Probe strategy : this.probingStrategy) {
@@ -74,7 +75,6 @@ public final class FileResolver {
     }
 
     public static enum Probe {
-
         WORKING_DIR {
             @Override
             public Optional<FilePath> resolve(String filePath, AbstractBuild build, TaskListener listener) {
@@ -100,13 +100,13 @@ public final class FileResolver {
 
         public abstract Optional<FilePath> resolve(String filePath, AbstractBuild build, TaskListener listener);
 
-        protected Optional<FilePath> resolve(FilePath filePath, TaskListener listener) {
+        Optional<FilePath> resolve(FilePath filePath, TaskListener listener) {
             try {
                 if (filePath.exists()) {
                     return Optional.of(filePath);
                 }
             } catch (Exception ex) {
-                String msg = String.format("Failed to find the file at '%s'%n%s", filePath.getRemote(), Throwables.getStackTraceAsString(ex));
+                String msg = String.format("Failed to find the file at (%s)%n%s", filePath.getRemote(), Throwables.getStackTraceAsString(ex));
                 listener.error(msg);
             }
             return Optional.absent();

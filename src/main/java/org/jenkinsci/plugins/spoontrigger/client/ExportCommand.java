@@ -7,10 +7,11 @@ import org.jenkinsci.plugins.spoontrigger.utils.Patterns;
 
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
+import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 
 public final class ExportCommand extends VoidCommand {
 
-    ExportCommand(ArgumentListBuilder argumentList) {
+    private ExportCommand(ArgumentListBuilder argumentList) {
         super(argumentList);
     }
 
@@ -24,24 +25,24 @@ public final class ExportCommand extends VoidCommand {
         private Optional<String> image = Optional.absent();
 
         public CommandBuilder outputDirectory(FilePath outputDirectory) {
-            checkArgument(outputDirectory != null, "outputDirectory must be set");
+            checkArgument(outputDirectory != null, REQUIRE_NOT_NULL_S, "outputDirectory");
 
             this.outputDirectory = Optional.of(outputDirectory);
             return this;
         }
 
         public CommandBuilder image(String image) {
-            checkArgument(Patterns.isSingleWord(image), "image '%s' must be a single word", image);
+            checkArgument(Patterns.isSingleWord(image), REQUIRE_SINGLE_WORD_SP, "image", image);
 
             this.image = Optional.of(image);
             return this;
         }
 
         public ExportCommand build() {
-            checkState(this.image.isPresent(), "image must be set");
-            checkState(this.outputDirectory.isPresent(), "outputDirectory must be set");
+            checkState(this.image.isPresent(), REQUIRE_PRESENT_S, "image");
+            checkState(this.outputDirectory.isPresent(), REQUIRE_PRESENT_S, "outputDirectory");
 
-            ArgumentListBuilder buildArgs = new ArgumentListBuilder(CONSOLE_APP, "export", this.image.get());
+            ArgumentListBuilder buildArgs = new ArgumentListBuilder(SPOON_CLIENT, "export", this.image.get());
             buildArgs.addQuoted(this.outputDirectory.get().getRemote());
             return new ExportCommand(buildArgs);
         }

@@ -15,7 +15,7 @@ import java.util.Locale;
 
 public final class AutoCompletion {
 
-    public static final AutoCompletionCandidates NO_SUGGESTIONS = new AutoCompletionCandidates();
+    private static final AutoCompletionCandidates NO_SUGGESTIONS = new AutoCompletionCandidates();
 
     private static final Predicate<File> IS_DIRECTORY = new IsDirectoryPredicate();
     private static final AutoCompletion INSTANCE = new AutoCompletion();
@@ -65,14 +65,14 @@ public final class AutoCompletion {
     Collection<File> listFileSystemItems(@Nullable String filePath) {
         String normalizedFilePath = Util.fixEmptyAndTrim(filePath);
         if (isNullOrRemotePath(normalizedFilePath)) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         File candidateFile = new File(normalizedFilePath);
         if (candidateFile.exists()) {
 
             if (!candidateFile.isDirectory()) {
-                return Collections.EMPTY_LIST;
+                return Collections.emptyList();
             }
 
             return this.fsEnumerator.listFiles(candidateFile);
@@ -80,7 +80,7 @@ public final class AutoCompletion {
 
         File parentFile = candidateFile.getParentFile();
         if (parentFile == null || !parentFile.isDirectory()) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         String candidateFileName = candidateFile.getName();
@@ -92,7 +92,7 @@ public final class AutoCompletion {
 
         private static Collection<File> wrap(@Nullable File[] files) {
             if (files == null || files.length == 0) {
-                return Collections.EMPTY_LIST;
+                return Collections.emptyList();
             }
             return Arrays.asList(files);
         }
