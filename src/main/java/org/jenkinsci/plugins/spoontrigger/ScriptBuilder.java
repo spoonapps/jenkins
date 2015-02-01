@@ -11,7 +11,7 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
-import lombok.Data;
+import lombok.Getter;
 import org.jenkinsci.plugins.spoontrigger.client.BuildCommand;
 import org.jenkinsci.plugins.spoontrigger.client.LoginCommand;
 import org.jenkinsci.plugins.spoontrigger.client.SpoonClient;
@@ -35,22 +35,21 @@ import java.util.Map;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkState;
 
-@Data
 public class ScriptBuilder extends Builder {
 
     @Nullable
-    private final String scriptFilePath;
+    @Getter private final String scriptFilePath;
     @Nullable
-    private final String credentialsId;
+    @Getter private final String credentialsId;
     @Nullable
-    private final String imageName;
+    @Getter private final String imageName;
     @Nullable
-    private final String vmVersion;
+    @Getter private final String vmVersion;
     @Nullable
-    private final String containerWorkingDir;
-    private final boolean diagnostic;
-    private final boolean noBase;
-    private final boolean overwrite;
+    @Getter private final String containerWorkingDir;
+    @Getter private final boolean diagnostic;
+    @Getter private final boolean noBase;
+    @Getter private final boolean overwrite;
 
     @DataBoundConstructor
     public ScriptBuilder(String scriptFilePath, String credentialsId,
@@ -172,7 +171,7 @@ public class ScriptBuilder extends Builder {
         return credentials;
     }
 
-    private EnvVars getEnvironment(AbstractBuild build, BuildListener listener) throws IllegalStateException {
+    private EnvVars getEnvironment(AbstractBuild<?,?> build, BuildListener listener) throws IllegalStateException {
         try {
             EnvVars env = build.getEnvironment(listener);
             Map<String, String> buildVariables = build.getBuildVariables();

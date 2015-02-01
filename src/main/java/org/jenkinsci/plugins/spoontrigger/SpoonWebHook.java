@@ -13,6 +13,8 @@ import jenkins.model.Jenkins;
 import net.sf.json.JSONException;
 import net.sf.json.JSONObject;
 import org.jenkinsci.main.modules.instance_identity.InstanceIdentity;
+import org.jenkinsci.plugins.spoontrigger.git.PushCause;
+import org.jenkinsci.plugins.spoontrigger.git.Repository;
 import org.jenkinsci.plugins.spoontrigger.utils.Identity;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -68,7 +70,7 @@ public class SpoonWebHook implements UnprotectedRootAction {
         String payload = getPayload(request);
 
         checkState(payload != null, "Not intended to be browsed interactively (must specify payload parameter)."
-                + " Ensure that the web hook 'Content-Type' header is 'application/x-www-form-urlencoded'");
+                + " Ensure that the web hook Content-Type header is application/x-www-form-urlencoded");
 
         String eventName = getEventType(request);
         GitHubEvent event = GitHubEvent.from(eventName);
@@ -78,16 +80,16 @@ public class SpoonWebHook implements UnprotectedRootAction {
                 response.setStatus(HTTP_OK);
                 break;
             case PUSH:
-                GitPushCause cause = createCause(payload);
+                PushCause cause = createCause(payload);
                 this.triggerBuilds(Jenkins.getInstance(), cause);
                 break;
             case UNKNOWN:
-                String msg = String.format("Spoon WebHook event of type '%s' is not supported. Only 'push' and support events are supported", eventName);
+                String msg = String.format("Spoon WebHook event type (%s) is not supported. Only push and support events are supported", eventName);
                 throw new IllegalArgumentException(msg);
         }
     }
 
-    void triggerBuilds(Jenkins server, GitPushCause cause) {
+    void triggerBuilds(Jenkins server, PushCause cause) {
         for (SpoonTrigger trigger : getAllTriggers(server)) {
             if(shouldRun(trigger, cause)) {
                 trigger.run(cause);
@@ -101,22 +103,23 @@ public class SpoonWebHook implements UnprotectedRootAction {
                 .filter(Predicates.notNull());
     }
 
-    private static GitPushCause createCause(String payload) throws IllegalStateException {
+    private static PushCause createCause(String payload) throws IllegalStateException {
         try {
             JSONObject json = JSONObject.fromObject(payload);
             String repository = json.getJSONObject("repository").getString("url");
             String pusher = json.getJSONObject("pusher").getString("name");
             String newHeadId = json.getString("after");
-            return new GitPushCause(pusher, repository, newHeadId);
+            String branch = json.getString("ref");
+            return new PushCause(repository, pusher, branch, newHeadId);
         } catch (JSONException ex) {
             throw new IllegalStateException("Failed parsing web hook payload", ex);
         }
     }
 
-    private static boolean shouldRun(SpoonTrigger trigger, GitPushCause cause) {
+    private static boolean shouldRun(SpoonTrigger trigger, PushCause cause) {
         String triggerRepo = Util.fixNull(trigger.getRepositoryUrl());
-        String causeRepo = Util.fixNull(cause.getRepositoryUrl());
-        return triggerRepo.equalsIgnoreCase(causeRepo);
+        Repository causeRepo = cause.getRepository();
+        return triggerRepo.equalsIgnoreCase(causeRepo.getUrl());
     }
 
     private static boolean isJenkinsValidation(StaplerRequest request) {

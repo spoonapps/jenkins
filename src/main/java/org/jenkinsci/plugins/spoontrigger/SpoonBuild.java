@@ -5,18 +5,17 @@ import com.google.common.base.Optional;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.model.Build;
-import lombok.Data;
+import lombok.Getter;
 
 import java.io.File;
 import java.io.IOException;
 
-@Data
 public class SpoonBuild extends Build<SpoonProject, SpoonBuild> {
 
-    private Optional<StandardUsernamePasswordCredentials> credentials = Optional.absent();
-    private Optional<String> builtImage = Optional.absent();
-    private Optional<FilePath> script = Optional.absent();
-    private Optional<EnvVars> env = Optional.absent();
+    @Getter private Optional<StandardUsernamePasswordCredentials> credentials = Optional.absent();
+    @Getter private Optional<String> builtImage = Optional.absent();
+    @Getter private Optional<FilePath> script = Optional.absent();
+    @Getter private Optional<EnvVars> env = Optional.absent();
 
     public SpoonBuild(SpoonProject project) throws IOException {
         super(project);

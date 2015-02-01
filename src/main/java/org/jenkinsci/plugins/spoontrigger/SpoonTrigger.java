@@ -10,6 +10,8 @@ import hudson.util.FormValidation;
 import hudson.util.SequentialExecutionQueue;
 import jenkins.model.Jenkins;
 import lombok.Data;
+import lombok.Getter;
+import org.jenkinsci.plugins.spoontrigger.git.PushCause;
 import org.jenkinsci.plugins.spoontrigger.utils.Identity;
 import org.jenkinsci.plugins.spoontrigger.utils.Patterns;
 import org.jenkinsci.plugins.spoontrigger.validation.*;
@@ -22,19 +24,18 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Logger;
 
-@Data
 public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
 
     private static final Logger LOGGER = Logger.getLogger(SpoonTrigger.class.getName());
 
-    private final String repositoryUrl;
+    @Getter private final String repositoryUrl;
 
     @DataBoundConstructor
     public SpoonTrigger(String repositoryUrl) {
         this.repositoryUrl = Util.fixEmptyAndTrim(repositoryUrl);
     }
 
-    public void run(GitPushCause cause) {
+    public void run(PushCause cause) {
         ScheduledBuild runnable = new ScheduledBuild(super.job, cause);
         DescriptorImpl descriptor = this.getDescriptor();
         descriptor.queueJob(runnable);
@@ -52,19 +53,19 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
 
     private static final class ScheduledBuild implements Runnable {
         private final AbstractProject project;
-        private final GitPushCause cause;
+        private final PushCause cause;
 
-        public ScheduledBuild(AbstractProject project, GitPushCause cause) {
+        public ScheduledBuild(AbstractProject project, PushCause cause) {
             this.project = project;
             this.cause = cause;
         }
 
         @Override
         public void run() {
-            final boolean scheduled = project.scheduleBuild(cause);
-            String msgPattern = scheduled ? "Changes detected in '%s'. Triggering '%s build."
-                    : "Ignoring changes in '%s'. Build '%s' is already in the queue";
-            String msg = String.format(msgPattern, cause.getRepositoryUrl(), project.getName());
+            final boolean scheduled = this.project.scheduleBuild(this.cause);
+            String msgPattern = scheduled ? "Changes detected in (%s). Triggering (%s) build."
+                    : "Ignoring changes in (%s). Build (%s) is already in the queue";
+            String msg = String.format(msgPattern, this.cause.getRepository(), this.project.getName());
             LOGGER.info(msg);
         }
     }
@@ -80,14 +81,9 @@ public class SpoonTrigger extends Trigger<AbstractProject<?, ?>> {
             DEFAULT_URL = Jenkins.getInstance().getRootUrl() + SpoonWebHook.getInstance().getUrlName();
 
             Validator<String> notNullValidator = StringValidators.isNotNull("URL cannot be empty", Level.ERROR);
-            WEB_HOOK_VALIDATOR = Validators.chain(
-                notNullValidator,
-                new ConnectionValidator()
-            );
-            REPOSITORY_STRING_VALIDATOR = Validators.chain(
-                notNullValidator,
-                new PredicateValidator<String>(Patterns.Predicates.REPOSITORY_NAME, "Parameter is not correct URL to GitHub repository", Level.ERROR)
-            );
+            WEB_HOOK_VALIDATOR = Validators.chain(notNullValidator, new ConnectionValidator());
+            REPOSITORY_STRING_VALIDATOR = Validators.chain(notNullValidator,
+                new PredicateValidator<String>(Patterns.Predicates.REPOSITORY_NAME, "Parameter is not correct URL to GitHub repository", Level.ERROR));
         }
 
         private transient final SequentialExecutionQueue queue;
