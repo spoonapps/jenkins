@@ -158,7 +158,10 @@ public class PushPublisher extends SpoonBasePublisher {
 
                 String remoteImageStrategyName = pushJSON.getString("value");
                 RemoteImageStrategy remoteImageStrategy = RemoteImageStrategy.valueOf(remoteImageStrategyName);
-                String remoteImageName = (String) pushJSON.getOrDefault("remoteImageName", null);
+                String remoteImageName = null;
+                if(pushJSON.containsKey("remoteImageName")) {
+                    remoteImageName = pushJSON.getString("remoteImageName");
+                }
                 return new PushPublisher(remoteImageStrategy, remoteImageName);
             } catch (JSONException ex) {
                 throw new IllegalStateException("Error while parsing data form", ex);
