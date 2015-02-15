@@ -9,6 +9,7 @@ import lombok.Getter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 
 public class SpoonBuild extends Build<SpoonProject, SpoonBuild> {
 
@@ -27,6 +28,11 @@ public class SpoonBuild extends Build<SpoonProject, SpoonBuild> {
 
     public SpoonBuild(SpoonProject project, File buildDir) throws IOException {
         super(project, buildDir);
+    }
+
+    Date getStartDate() {
+        long startTime = this.getStartTimeInMillis();
+        return new Date(startTime);
     }
 
     void setCredentials(StandardUsernamePasswordCredentials credentials) {

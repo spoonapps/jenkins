@@ -4,8 +4,6 @@ import com.google.common.base.Predicate;
 
 import java.io.File;
 
-import static org.jenkinsci.plugins.spoontrigger.Messages.PATH_SHOULD_BE_ABSOLUTE;
-
 public final class FileValidators {
 
     public static Validator<File> isFile(String failureMsg) {
@@ -20,11 +18,11 @@ public final class FileValidators {
         return new PredicateValidator<File>(Predicates.EXISTS, failureMsg, Level.ERROR);
     }
 
-    public static Validator<File> isPathAbsolute() {
-        return new PredicateValidator<File>(Predicates.IS_PATH_ABSOLUTE, PATH_SHOULD_BE_ABSOLUTE, Level.WARNING);
+    public static Validator<File> isPathAbsolute(String failureMsg, Level level) {
+        return new PredicateValidator<File>(Predicates.IS_PATH_ABSOLUTE, failureMsg, level);
     }
 
-    enum Predicates implements Predicate<File> {
+    public enum Predicates implements Predicate<File> {
         EXISTS {
             @Override
             public boolean apply(File file) {

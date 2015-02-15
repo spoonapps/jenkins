@@ -90,7 +90,7 @@ public class ExportPublisher extends SpoonBasePublisher {
             OUTPUT_DIRECTORY_FILE_VALIDATOR = Validators.chain(
                     FileValidators.exists(String.format(DOES_NOT_EXIST_S, "Directory")),
                     FileValidators.isDirectory(String.format(PATH_NOT_POINT_TO_ITEM_S, "a directory")),
-                    FileValidators.isPathAbsolute());
+                    FileValidators.isPathAbsolute(PATH_SHOULD_BE_ABSOLUTE, Level.WARNING));
 
             OUTPUT_DIRECTORY_STRING_VALIDATOR = StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR);
         }

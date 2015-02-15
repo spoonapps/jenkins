@@ -1,7 +1,10 @@
 package org.jenkinsci.plugins.spoontrigger.validation;
 
 import com.google.common.base.Predicate;
+import com.google.common.base.Strings;
 import org.jenkinsci.plugins.spoontrigger.utils.Patterns;
+
+import java.text.SimpleDateFormat;
 
 public final class StringValidators {
 
@@ -17,7 +20,11 @@ public final class StringValidators {
         return new PredicateValidator<String>(Patterns.Predicates.SINGLE_WORD, failureMsg, Level.ERROR);
     }
 
-    enum Predicates implements Predicate<String> {
+    public static Validator<String> isDateFormat(String failureMsg) {
+        return new PredicateValidator<String>(Predicates.IS_DATE_FORMAT, failureMsg, Level.ERROR);
+    }
+
+    public enum Predicates implements Predicate<String> {
         IS_NULL {
             @Override
             public boolean apply(String value) {
@@ -28,6 +35,22 @@ public final class StringValidators {
             @Override
             public boolean apply(String value) {
                 return value != null;
+            }
+        },
+        IS_DATE_FORMAT {
+            @Override
+            public boolean apply(String value) {
+                if(Strings.isNullOrEmpty(value)) {
+                    return false;
+                }
+
+                try {
+                    SimpleDateFormat dateFormat = new SimpleDateFormat();
+                    dateFormat.applyPattern(value);
+                    return true;
+                } catch (IllegalArgumentException ex) {
+                    return false;
+                }
             }
         };
 

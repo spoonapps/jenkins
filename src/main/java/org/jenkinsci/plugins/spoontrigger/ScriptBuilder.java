@@ -53,6 +53,7 @@ public class ScriptBuilder extends Builder {
     @Nullable
     @Getter
     private final String containerWorkingDir;
+
     @Nullable
     @Getter
     private final MountSettings mountSettings;
@@ -93,15 +94,15 @@ public class ScriptBuilder extends Builder {
     }
 
     public String getSourceContainer() {
-        return (this.mountSettings == null) ? null : this.mountSettings.getSourceContainer();
+        return (this.mountSettings != null) ? this.mountSettings.getSourceContainer() : null;
     }
 
     public String getTargetFolder() {
-        return (this.mountSettings == null) ? null : this.mountSettings.getTargetFolder();
+        return (this.mountSettings != null) ? this.mountSettings.getTargetFolder() : null;
     }
 
     public String getSourceFolder() {
-        return (this.mountSettings == null) ? null : this.mountSettings.getSourceFolder();
+        return (this.mountSettings != null) ? this.mountSettings.getSourceFolder() : null;
     }
 
     @Override
@@ -293,9 +294,9 @@ public class ScriptBuilder extends Builder {
             IGNORE_NULL_VALIDATOR = StringValidators.isNotNull(IGNORE_PARAMETER, Level.OK);
             SCRIPT_FILE_PATH_STRING_VALIDATOR = StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR);
             SCRIPT_FILE_PATH_FILE_VALIDATOR = Validators.chain(
+                    FileValidators.isPathAbsolute(EMPTY, Level.OK),
                     FileValidators.exists(String.format(DOES_NOT_EXIST_S, "File")),
-                    FileValidators.isFile(String.format(PATH_NOT_POINT_TO_ITEM_S, "a file")),
-                    FileValidators.isPathAbsolute()
+                    FileValidators.isFile(String.format(PATH_NOT_POINT_TO_ITEM_S, "a file"))
             );
             VERSION_NUMBER_VALIDATOR = Validators.chain(
                     IGNORE_NULL_VALIDATOR,

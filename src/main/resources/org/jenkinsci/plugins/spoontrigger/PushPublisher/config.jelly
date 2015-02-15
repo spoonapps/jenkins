@@ -2,17 +2,37 @@
 <j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
     <f:entry title="Remote image name">
         <f:radioBlock name="remoteImageStrategy" title="Do not use" value="DO_NOT_USE"
-            checked="${instance.remoteImageStrategy eq 'DO_NOT_USE' or empty instance.remoteImageStrategy}"
-            help="/plugin/spoon-trigger/help-remoteImageStrategyDoNotUse.html"/>
+                      checked="${instance.remoteImageStrategy eq 'DO_NOT_USE' or empty instance.remoteImageStrategy}"
+                      help="/plugin/spoon-trigger/help-remoteImageStrategyDoNotUse.html"/>
         <f:radioBlock name="remoteImageStrategy" title="Generate from Git" value="GENERATE_GIT"
-            checked="${instance.remoteImageStrategy eq 'GENERATE_GIT'}"
-            help="/plugin/spoon-trigger/help-remoteImageStrategyGenerateGit.html"/>
+                      checked="${instance.remoteImageStrategy eq 'GENERATE_GIT'}"
+                      help="/plugin/spoon-trigger/help-remoteImageStrategyGenerateGit.html">
+            <f:advanced>
+                <f:optionalBlock title="Overwrite organization" field="overwriteOrganization" inline="true"
+                                 checked="${instance.overwriteOrganization}">
+                    <f:entry title="Organization" field="organization">
+                        <f:textbox
+                                checkUrl="'descriptorByName/PushPublisher/checkOrganization?value='+escape(this.value)"/>
+                    </f:entry>
+                </f:optionalBlock>
+            </f:advanced>
+        </f:radioBlock>
         <f:radioBlock name="remoteImageStrategy" title="Fixed" value="FIXED"
-            checked="${instance.remoteImageStrategy eq 'FIXED'}"
-            help="/plugin/spoon-trigger/help-remoteImageStrategyFixed.html">
-            <f:entry field="remoteImageName">
-                <f:textbox checkUrl="'descriptorByName/PushPublisher/checkRemoteImageName?value='+escape(this.value)"/>
+                      checked="${instance.remoteImageStrategy eq 'FIXED'}"
+                      help="/plugin/spoon-trigger/help-remoteImageStrategyFixed.html">
+            <f:entry field="remoteImageName" title="Name">
+                <f:textbox
+                        checkUrl="'descriptorByName/PushPublisher/checkRemoteImageName?value='+escape(this.value)"/>
             </f:entry>
+            <f:advanced>
+                <f:optionalBlock title="Append date" field="appendDate" inline="true"
+                                 checked="${instance.appendDate}">
+                    <f:entry title="Date format" field="dateFormat">
+                        <f:textbox
+                                checkUrl="'descriptorByName/PushPublisher/checkDateFormat?value='+escape(this.value)"/>
+                    </f:entry>
+                </f:optionalBlock>
+            </f:advanced>
         </f:radioBlock>
     </f:entry>
 </j:jelly>

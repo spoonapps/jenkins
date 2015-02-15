@@ -24,6 +24,10 @@ public final class Messages {
     public static final String DOES_NOT_EXIST_S = "%s does not exist";
     public static final String DOES_NOT_EXIST_SP = "%s (%s) does not exist";
 
+    public static final String INVALID_DATE_FORMAT = "Invalid date format. Click help link to get the list of supported date and time components.";
+
+    public static final String EMPTY = "";
+
     public static String requireInstanceOf(String name, Class aClass) {
         return String.format("%s must be an instance of (%s) class", name, toString(aClass));
     }
