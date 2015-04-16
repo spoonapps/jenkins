@@ -14,8 +14,16 @@ public final class FileValidators {
         return new PredicateValidator<File>(Predicates.IS_DIRECTORY, failureMsg, Level.ERROR);
     }
 
+    public static Validator<File> isNotDirectory(String failureMsg) {
+        return new PredicateValidator<File>(com.google.common.base.Predicates.not(Predicates.IS_DIRECTORY), failureMsg, Level.ERROR);
+    }
+
     public static Validator<File> exists(String failureMsg) {
         return new PredicateValidator<File>(Predicates.EXISTS, failureMsg, Level.ERROR);
+    }
+
+    public static Validator<File> notExist(String failureMsg, Level level) {
+        return new PredicateValidator<File>(com.google.common.base.Predicates.not(Predicates.EXISTS), failureMsg, level);
     }
 
     public static Validator<File> isPathAbsolute(String failureMsg, Level level) {

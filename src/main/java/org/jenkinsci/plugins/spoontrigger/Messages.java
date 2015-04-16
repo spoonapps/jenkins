@@ -21,8 +21,8 @@ public final class Messages {
     public static final String PATH_NOT_POINT_TO_ITEM_SPS = "%s (%s) does not point to %s";
     public static final String PATH_SHOULD_BE_ABSOLUTE = "Path should be absolute if the build will be executed on a remote machine";
 
+    public static final String EXIST_S = "%s already exists";
     public static final String DOES_NOT_EXIST_S = "%s does not exist";
-    public static final String DOES_NOT_EXIST_SP = "%s (%s) does not exist";
 
     public static final String INVALID_DATE_FORMAT = "Invalid date format. Click help link to get the list of supported date and time components.";
 
