@@ -105,7 +105,7 @@ public class PushPublisher extends SpoonBasePublisher {
             @Override
             public Optional<String> tryGetRemoteImage(PushPublisher publisher, SpoonBuild build) {
                 Optional<String> organization = Optional.absent();
-                if(publisher.isOverwriteOrganization()) {
+                if (publisher.isOverwriteOrganization()) {
                     organization = Optional.fromNullable(publisher.getOrganization());
                 }
 
@@ -150,7 +150,7 @@ public class PushPublisher extends SpoonBasePublisher {
                 String remoteImageName = publisher.getRemoteImageName();
 
                 String rawDateFormat = publisher.getDateFormat();
-                if(publisher.isAppendDate() && !Strings.isNullOrEmpty(rawDateFormat)) {
+                if (publisher.isAppendDate() && !Strings.isNullOrEmpty(rawDateFormat)) {
                     SimpleDateFormat dateFormat = new SimpleDateFormat(rawDateFormat);
                     Date startDate = build.getStartDate();
                     remoteImageName += dateFormat.format(startDate);

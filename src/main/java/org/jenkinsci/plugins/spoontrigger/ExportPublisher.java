@@ -26,17 +26,17 @@ import static org.jenkinsci.plugins.spoontrigger.Messages.*;
 public class ExportPublisher extends SpoonBasePublisher {
 
     @Getter
-    private final String outputDirectory;
+    private final String outputFile;
     @Nullable
-    private transient FilePath runtimeOutputDirectory;
+    private transient FilePath runtimeOutputFile;
 
     @DataBoundConstructor
-    public ExportPublisher(String outputDirectory) {
-        this.outputDirectory = Util.fixEmptyAndTrim(outputDirectory);
+    public ExportPublisher(String outputFile) {
+        this.outputFile = Util.fixEmptyAndTrim(outputFile);
     }
 
-    private static IllegalStateException onFailedResolveOutputDirectory(String directoryPath, Exception ex) {
-        String msg = String.format(FAILED_RESOLVE_SP, "output directory", directoryPath);
+    private static IllegalStateException onFailedResolveOutputFile(String filePath, Exception ex) {
+        String msg = String.format(FAILED_RESOLVE_SP, "output file", filePath);
         return new IllegalStateException(msg, ex);
     }
 
@@ -44,7 +44,7 @@ public class ExportPublisher extends SpoonBasePublisher {
     public void beforePublish(SpoonBuild build, BuildListener listener) throws IllegalStateException {
         super.beforePublish(build, listener);
 
-        this.runtimeOutputDirectory = this.resolveOutputDirectory(build, listener);
+        this.runtimeOutputFile = this.resolveOutputFile(build, listener);
     }
 
     @Override
@@ -54,45 +54,49 @@ public class ExportPublisher extends SpoonBasePublisher {
         exportCmd.run(client);
     }
 
-    private FilePath resolveOutputDirectory(SpoonBuild build, TaskListener listener) throws IllegalStateException {
-        checkState(this.outputDirectory != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "output directory");
+    private FilePath resolveOutputFile(SpoonBuild build, TaskListener listener) throws IllegalStateException {
+        checkState(this.outputFile != null, REQUIRE_NOT_NULL_OR_EMPTY_S, "output file");
 
         Optional<EnvVars> env = build.getEnv();
 
         checkState(env.isPresent(), REQUIRE_PRESENT_S, "build environment variables");
 
-        Optional<FilePath> directoryPath = FileResolver.create().env(env.get()).build(build).listener(listener).resolve(this.outputDirectory);
+        Optional<FilePath> outputFilePath = FileResolver.create().env(env.get()).build(build).listener(listener).resolve(this.outputFile);
 
-        checkState(directoryPath.isPresent(), DOES_NOT_EXIST_SP, "output directory", this.outputDirectory);
+        if (outputFilePath.isPresent()) {
+            try {
+                checkState(!outputFilePath.isPresent() || !outputFilePath.get().isDirectory(), PATH_NOT_POINT_TO_ITEM_SPS, "output file", this.outputFile, "a file");
+            } catch (IOException ex) {
+                throw onFailedResolveOutputFile(this.outputFile, ex);
+            } catch (InterruptedException ex) {
+                throw onFailedResolveOutputFile(this.outputFile, ex);
+            }
 
-        try {
-            checkState(directoryPath.get().isDirectory(), PATH_NOT_POINT_TO_ITEM_SPS, "output directory", this.outputDirectory, "a directory");
-        } catch (IOException ex) {
-            throw onFailedResolveOutputDirectory(this.outputDirectory, ex);
-        } catch (InterruptedException ex) {
-            throw onFailedResolveOutputDirectory(this.outputDirectory, ex);
+            return outputFilePath.get();
         }
 
-        return directoryPath.get();
+        String expandedFilepath = env.get().expand(this.outputFile);
+        File outputFile = new File(expandedFilepath);
+        return new FilePath(outputFile);
     }
 
     private ExportCommand createExportCommand() {
-        return ExportCommand.builder().outputDirectory(this.runtimeOutputDirectory).image(this.getImageName().get()).build();
+        return ExportCommand.builder().outputFile(this.runtimeOutputFile).image(this.getImageName().get()).build();
     }
 
     @Extension
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
-        private static final Validator<File> OUTPUT_DIRECTORY_FILE_VALIDATOR;
-        private static final Validator<String> OUTPUT_DIRECTORY_STRING_VALIDATOR;
+        private static final Validator<File> OUTPUT_FILE_VALIDATOR;
+        private static final Validator<String> OUTPUT_FILE_STRING_VALIDATOR;
 
         static {
-            OUTPUT_DIRECTORY_FILE_VALIDATOR = Validators.chain(
-                    FileValidators.exists(String.format(DOES_NOT_EXIST_S, "Directory")),
-                    FileValidators.isDirectory(String.format(PATH_NOT_POINT_TO_ITEM_S, "a directory")),
+            OUTPUT_FILE_VALIDATOR = Validators.chain(
+                    FileValidators.isNotDirectory(String.format(PATH_NOT_POINT_TO_ITEM_S, "a file")),
+                    FileValidators.notExist(String.format(EXIST_S, "File"), Level.WARNING),
                     FileValidators.isPathAbsolute(PATH_SHOULD_BE_ABSOLUTE, Level.WARNING));
 
-            OUTPUT_DIRECTORY_STRING_VALIDATOR = StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR);
+            OUTPUT_FILE_STRING_VALIDATOR = StringValidators.isNotNull(REQUIRED_PARAMETER, Level.ERROR);
         }
 
         @Override
@@ -100,20 +104,20 @@ public class ExportPublisher extends SpoonBasePublisher {
             return TypeToken.of(SpoonProject.class).isAssignableFrom(aClass);
         }
 
-        public FormValidation doCheckOutputDirectory(@QueryParameter String value) {
+        public FormValidation doCheckOutputFile(@QueryParameter String value) {
             String filePath = Util.fixEmptyAndTrim(value);
             try {
-                OUTPUT_DIRECTORY_STRING_VALIDATOR.validate(filePath);
-                File outputDirectory = new File(filePath);
-                OUTPUT_DIRECTORY_FILE_VALIDATOR.validate(outputDirectory);
+                OUTPUT_FILE_STRING_VALIDATOR.validate(filePath);
+                File outputFile = new File(filePath);
+                OUTPUT_FILE_VALIDATOR.validate(outputFile);
                 return FormValidation.ok();
             } catch (ValidationException ex) {
                 return ex.getFailureMessage();
             }
         }
 
-        public AutoCompletionCandidates doAutoCompleteOutputDirectory(@QueryParameter String value) {
-            return AutoCompletion.suggestDirectories(value);
+        public AutoCompletionCandidates doAutoCompleteOutputFile(@QueryParameter String value) {
+            return AutoCompletion.suggestFiles(value);
         }
 
         @Override

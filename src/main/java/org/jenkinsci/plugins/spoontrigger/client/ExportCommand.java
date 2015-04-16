@@ -21,13 +21,13 @@ public final class ExportCommand extends VoidCommand {
 
     public static final class CommandBuilder {
 
-        private Optional<FilePath> outputDirectory = Optional.absent();
+        private Optional<FilePath> outputFile = Optional.absent();
         private Optional<String> image = Optional.absent();
 
-        public CommandBuilder outputDirectory(FilePath outputDirectory) {
-            checkArgument(outputDirectory != null, REQUIRE_NOT_NULL_S, "outputDirectory");
+        public CommandBuilder outputFile(FilePath outputFile) {
+            checkArgument(outputFile != null, REQUIRE_NOT_NULL_S, "outputFile");
 
-            this.outputDirectory = Optional.of(outputDirectory);
+            this.outputFile = Optional.of(outputFile);
             return this;
         }
 
@@ -40,10 +40,10 @@ public final class ExportCommand extends VoidCommand {
 
         public ExportCommand build() {
             checkState(this.image.isPresent(), REQUIRE_PRESENT_S, "image");
-            checkState(this.outputDirectory.isPresent(), REQUIRE_PRESENT_S, "outputDirectory");
+            checkState(this.outputFile.isPresent(), REQUIRE_PRESENT_S, "outputFile");
 
             ArgumentListBuilder buildArgs = new ArgumentListBuilder(SPOON_CLIENT, "export", this.image.get());
-            buildArgs.addQuoted(this.outputDirectory.get().getRemote());
+            buildArgs.addQuoted(this.outputFile.get().getRemote());
             return new ExportCommand(buildArgs);
         }
     }
