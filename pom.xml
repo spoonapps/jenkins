@@ -11,17 +11,17 @@
         <relativePath/>
     </parent>
 
-    <artifactId>spoon-trigger</artifactId>
+    <artifactId>spoon</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
-    <name>Spoon Trigger</name>
-    <description>Executes Spoon scripts and exports images or pushes them to hub</description>
-    <!--<url>https://wiki.jenkins-ci.org/display/JENKINS/spoon-trigger</url>-->
+    <name>Spoon Plugin</name>
+    <description>Execute SpoonScripts, export images or push them to remote repository</description>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/spoon</url>
     <licenses>
         <license>
-            <name>MIT License</name>
-            <url>http://opensource.org/licenses/MIT</url>
+            <name>Apache License Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0/</url>
         </license>
     </licenses>
 
@@ -32,14 +32,6 @@
             <email>mateusz@spoon.net</email>
         </developer>
     </developers>
-
-    <!-- Assuming you want to host on @jenkinsci:
-    <scm>
-      <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
-      <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
-      <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
-    </scm>
-     -->
 
     <repositories>
         <repository>
@@ -75,24 +67,6 @@
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
             <version>15.0</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>2.0.3-beta</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.powermock</groupId>
-            <artifactId>powermock-core</artifactId>
-            <version>1.6.1</version>
-            <scope>test</scope>
         </dependency>
     </dependencies>
 
