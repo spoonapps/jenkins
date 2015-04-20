@@ -378,7 +378,7 @@ public class ScriptBuilder extends Builder {
 
         @Override
         public String getDisplayName() {
-            return "Execute Spoon script";
+            return "Execute SpoonScript";
         }
 
         private static final class CredentialValidator implements Validator<String> {
