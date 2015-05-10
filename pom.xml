@@ -12,7 +12,7 @@
 
     <groupId>org.jenkinsci.plugins.spoonscript</groupId>
     <artifactId>spoonscript</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>hpi</packaging>
 
     <name>SpoonScript Plugin</name>
@@ -29,7 +29,7 @@
         <connection>scm:git:ssh://github.com/jenkinsci/spoonscript-plugin.git</connection>
         <developerConnection>scm:git:ssh://git@github.com:jenkinsci/spoonscript-plugin.git</developerConnection>
         <url>http://github.com/jenkinsci/spoonscript-plugin</url>
-        <tag>HEAD</tag>
+        <tag>spoonscript-1.0</tag>
     </scm>
 
     <developers>
