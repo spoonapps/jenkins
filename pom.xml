@@ -11,19 +11,27 @@
         <relativePath/>
     </parent>
 
-    <artifactId>spoon</artifactId>
+    <groupId>org.jenkinsci.plugins.spoonscript</groupId>
+    <artifactId>spoonscript</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
-    <name>Spoon Plugin</name>
+    <name>SpoonScript Plugin</name>
     <description>Execute SpoonScripts, export images or push them to remote repository</description>
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/spoon</url>
+    <url>https://wiki.jenkins-ci.org/display/JENKINS/SpoonScript+Plugin</url>
     <licenses>
         <license>
             <name>Apache License Version 2.0</name>
             <url>http://www.apache.org/licenses/LICENSE-2.0/</url>
         </license>
     </licenses>
+
+    <scm>
+        <connection>scm:git:git://github.com/jenkinsci/${project.artifactId}-plugin.git</connection>
+        <developerConnection>scm:git:git@github.com:jenkinsci/${project.artifactId}-plugin.git</developerConnection>
+        <url>http://github.com/jenkinsci/${project.artifactId}-plugin</url>
+        <tag>HEAD</tag>
+    </scm>
 
     <developers>
         <developer>

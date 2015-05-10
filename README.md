@@ -1,4 +1,4 @@
-# Jenkins Plugin
+# SpoonScript Plugin
 
 This plugin integrates Jenkins with the Spoon platform. It allows Jenkins to build Spoon images and push them to the Spoon Hub.
 
